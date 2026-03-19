@@ -1800,7 +1800,75 @@ function makeRowEl(row, isStudy){
   var labelWrap = document.createElement('div');
   labelWrap.className = 'sched-row-label';
   if(isStudy){
-    labelWrap.appendChild(buildSubjectSelect('sel-'+row.id, row.subject||'', row));
+    // 勉強行：ラベル（参考書名/科目名）を表示し、タップで編集できるselect付き
+    var studyLabel = document.createElement('div');
+    studyLabel.style.cssText = 'display:flex;flex-direction:column;gap:2px;min-width:0;';
+
+    // メインラベル（参考書名 or 科目名）
+    var mainLbl = document.createElement('div');
+    mainLbl.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);'+
+      'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;';
+    var dispLabel = row.label || row.subject || '科目を選択';
+    mainLbl.textContent = dispLabel;
+    mainLbl.title = dispLabel;
+
+    // サブラベル（科目カテゴリ）
+    var subLbl = document.createElement('div');
+    subLbl.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    // 参考書名とは別に科目を表示（labelとsubjectが違う場合）
+    if(row.subject && row.label && row.subject !== row.label){
+      subLbl.textContent = row.subject;
+    } else if(!row.label || row.label === '勉強'){
+      subLbl.textContent = '科目・参考書を選択してください';
+      subLbl.style.color = 'var(--text4)';
+    }
+
+    // 隠しselectで実際の値変更
+    var hiddenSel = buildSubjectSelect('sel-'+row.id, row.bookId ? 'book:'+row.bookId : (row.subject||''), row);
+    hiddenSel.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;';
+    // ラベルクリックでselectを開く
+    mainLbl.onclick = function(){
+      hiddenSel.style.cssText = 'width:100%;font-size:13px;';
+      hiddenSel.focus();
+      // selectを開くトリガー（モバイルはclick、デスクトップはmousedown）
+      var ev = document.createEvent('MouseEvents');
+      ev.initMouseEvent('mousedown',true,true,window,0,0,0,0,0,false,false,false,false,0,null);
+      hiddenSel.dispatchEvent(ev);
+    };
+    hiddenSel.onchange = (function(r, ml, sl, hs){return function(){
+      var v = this.value;
+      if(v.indexOf('book:')===0){
+        var bid=v.slice(5);
+        var book=books.find(function(b){return b.id===bid;});
+        if(book){
+          r.subject=book.subject||book.name; r.label=book.name; r.bookId=bid;
+          ml.textContent=book.name; ml.title=book.name;
+          sl.textContent=book.subject||''; sl.style.color='var(--text3)';
+        }
+      } else if(v==='__other__'){
+        r.subject='その他'; r.label='勉強'; r.bookId=null;
+        ml.textContent='勉強'; sl.textContent='その他'; sl.style.color='var(--text3)';
+      } else if(v){
+        r.subject=v; r.label=v; r.bookId=null;
+        ml.textContent=v; ml.title=v; sl.textContent=''; sl.style.color='var(--text3)';
+      }
+      // select を再び非表示に
+      hs.style.cssText='position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;';
+      schedUpdate();
+    };})(row, mainLbl, subLbl, hiddenSel);
+
+    // select を閉じたときも非表示に戻す
+    hiddenSel.onblur = function(){
+      this.style.cssText='position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;';
+    };
+
+    var relWrap = document.createElement('div');
+    relWrap.style.cssText = 'position:relative;';
+    relWrap.appendChild(mainLbl);
+    relWrap.appendChild(subLbl);
+    relWrap.appendChild(hiddenSel);
+    studyLabel.appendChild(relWrap);
+    labelWrap.appendChild(studyLabel);
   } else {
     labelWrap.textContent = row.label;
   }
@@ -1848,8 +1916,28 @@ function buildSubjectSelect(id, selected, row){
     {label:'情報・その他',opts:['情報','小論文','面接']}
   ];
   var sel=document.createElement('select'); sel.id=id; sel.style.width='100%';
-  var def=document.createElement('option'); def.value=''; def.textContent='── 科目を選択 ──';
+  var def=document.createElement('option'); def.value=''; def.textContent='── 科目・参考書を選択 ──';
   sel.appendChild(def);
+
+  // 登録済み参考書をoptgroupとして先頭に追加
+  if(books.length>0){
+    var bOg=document.createElement('optgroup'); bOg.label='📚 登録済み参考書';
+    var sorted=books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
+    sorted.forEach(function(b){
+      var op=document.createElement('option');
+      // value は "book:ID" 形式で参考書を特定できるようにする
+      op.value='book:'+b.id;
+      var subjTag=b.subject?'['+b.subject+'] ':'';
+      op.textContent='　'+subjTag+b.name;
+      if(selected==='book:'+b.id || (row&&row.bookId&&row.bookId===b.id))op.selected=true;
+      bOg.appendChild(op);
+    });
+    sel.appendChild(bOg);
+    // セパレータ的なdisabledオプション
+    var sep=document.createElement('option'); sep.disabled=true; sep.textContent='── 科目で選択 ──';
+    sel.appendChild(sep);
+  }
+
   groups.forEach(function(g){
     var og=document.createElement('optgroup'); og.label=g.label;
     g.opts.forEach(function(o,oi){
@@ -1862,9 +1950,23 @@ function buildSubjectSelect(id, selected, row){
   });
   var other=document.createElement('option'); other.value='__other__'; other.textContent='その他';
   sel.appendChild(other);
+
   sel.onchange=(function(r){return function(){
-    r.subject=this.value==='__other__'?'その他':this.value;
-    r.label=r.subject||'勉強';
+    var v=this.value;
+    if(v.indexOf('book:')=== 0){
+      // 参考書を選択
+      var bid=v.slice(5);
+      var book=books.find(function(b){return b.id===bid;});
+      if(book){
+        r.subject=book.subject||book.name;
+        r.label=book.name;
+        r.bookId=bid;
+      }
+    } else if(v==='__other__'){
+      r.subject='その他'; r.label='勉強'; r.bookId=null;
+    } else {
+      r.subject=v; r.label=v||'勉強'; r.bookId=null;
+    }
     schedUpdate();
   };})(row);
   return sel;
@@ -1878,7 +1980,7 @@ function addLifeRow(){
 }
 
 function addStudyRow(){
-  schedRows.push({id:'r'+(schedRowIdSeq++), label:'勉強', startTime:'', min:60, cat:'勉強', subject:''});
+  schedRows.push({id:'r'+(schedRowIdSeq++), label:'', startTime:'', min:60, cat:'勉強', subject:'', bookId:null});
   renderAllRows(); schedUpdate();
 }
 
@@ -1992,8 +2094,8 @@ function applyImpModal(){
     var sorted=books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
     sorted.filter(function(b){return _impSelected[b.id];}).forEach(function(b){
       var min=b.dailyMin||Math.ceil(b.computed.perDay*2);
-      var label=(b.subject?b.subject+'：':'')+b.name;
-      schedRows.push({id:'r'+(schedRowIdSeq++),label:label,startTime:'',min:min,cat:'勉強',subject:b.subject||b.name});
+      schedRows.push({id:'r'+(schedRowIdSeq++),label:b.name,startTime:'',min:min,cat:'勉強',
+        subject:b.subject||b.name, bookId:b.id});
     });
   }
 
