@@ -596,6 +596,51 @@ body.gantt-active #pane-gantt{width:100%;}
   padding:11px;color:var(--text3);font-family:'Noto Sans JP',sans-serif;font-size:13px;
   cursor:pointer;transition:all .2s;margin-top:8px;}
 .ai-cancel-btn:hover{border-color:#555;color:#aaa;}
+
+/* ===================== IMPORT MODAL ===================== */
+.imp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:8200;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.imp-box{background:#1a1a1a;border:1px solid #333;border-radius:16px;
+  padding:26px;width:440px;max-width:95vw;max-height:85vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.imp-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
+  color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+.imp-heading{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;}
+.imp-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--surface2);
+  border-radius:10px;padding:3px;}
+.imp-tab{flex:1;padding:8px;border:none;border-radius:8px;font-family:'Noto Sans JP',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;
+  background:transparent;color:var(--text3);}
+.imp-tab.active{background:var(--gold);color:#0d0d0d;}
+.imp-list{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+.imp-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:#111;border:1px solid #2a2a2a;border-radius:10px;cursor:pointer;
+  transition:all .2s;}
+.imp-item:hover{border-color:#444;background:#161616;}
+.imp-item.selected{border-color:var(--gold);background:#1a1a00;}
+.imp-item-check{width:18px;height:18px;border:2px solid #444;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.imp-item.selected .imp-item-check{background:var(--gold);border-color:var(--gold);}
+.imp-item-check-mark{display:none;color:#0d0d0d;font-size:11px;font-weight:900;}
+.imp-item.selected .imp-item-check-mark{display:block;}
+.imp-item-body{flex:1;min-width:0;}
+.imp-item-name{font-size:13px;font-weight:600;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.imp-item-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+.imp-item-min{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;
+  color:var(--gold);white-space:nowrap;flex-shrink:0;}
+.imp-sel-all{font-size:11px;color:var(--text3);cursor:pointer;text-decoration:underline;
+  margin-bottom:10px;display:inline-block;}
+.imp-sel-all:hover{color:var(--gold);}
+.imp-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.imp-apply{background:var(--gold);border:none;border-radius:10px;padding:12px;
+  color:#0d0d0d;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;}
+.imp-apply:hover{background:var(--gold2);}
+.imp-cancel{background:transparent;border:1px solid #333;border-radius:10px;padding:12px;
+  color:var(--text3);font-family:'Noto Sans JP',sans-serif;font-size:13px;
+  cursor:pointer;transition:all .2s;}
+.imp-cancel:hover{border-color:#555;color:#aaa;}
 </style>
 </head>
 <body>
@@ -827,7 +872,7 @@ body.gantt-active #pane-gantt{width:100%;}
       <div id="sched-life-list"></div>
       <button class="btn-sched-add" onclick="addLifeRow()" style="margin-top:8px;">＋ 行動を追加</button>
       <div class="sched-section-title" style="margin-top:18px;">勉強時間</div>
-      <button class="btn-import-study" onclick="importStudyFromBooks()">📚 登録済み参考書から引用</button>
+      <button class="btn-import-study" onclick="openImpModal()">📚 登録済み参考書から引用</button>
       <div class="sched-col-hd" style="margin-top:10px;">
         <span>開始時刻</span><span>科目</span><span>時間(分)</span><span></span><span></span>
       </div>
@@ -899,6 +944,24 @@ body.gantt-active #pane-gantt{width:100%;}
   </div>
 
 </div><!-- /wrap -->
+
+<!-- ===== IMPORT BOOKS MODAL ===== -->
+<div id="imp-modal" class="imp-overlay" style="display:none;" onclick="if(event.target===this)closeImpModal()">
+  <div class="imp-box">
+    <div class="imp-title">参考書から引用</div>
+    <div class="imp-heading">📚 引用する項目を選択</div>
+    <div class="imp-tabs">
+      <button class="imp-tab active" id="imp-tab-subject" onclick="switchImpTab('subject')">科目でまとめる</button>
+      <button class="imp-tab" id="imp-tab-book" onclick="switchImpTab('book')">参考書ごとに追加</button>
+    </div>
+    <span class="imp-sel-all" onclick="toggleImpAll()">すべて選択 / 解除</span>
+    <div class="imp-list" id="imp-list"></div>
+    <div class="imp-btns">
+      <button class="imp-apply" onclick="applyImpModal()">✅ 引用して追加</button>
+      <button class="imp-cancel" onclick="closeImpModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== AI SCHEDULE MODAL ===== -->
 <div id="ai-sched-modal" class="ai-overlay" style="display:none;" onclick="if(event.target===this)closeAiSchedModal()">
@@ -1819,21 +1882,128 @@ function addStudyRow(){
   renderAllRows(); schedUpdate();
 }
 
-function importStudyFromBooks(){
+// ---- 参考書引用モーダル ----
+var _impTab = 'subject';   // 'subject' | 'book'
+var _impSelected = {};     // key -> true
+
+function openImpModal(){
   if(books.length===0){showToast('参考書が登録されていません','err');return;}
-  var map={};
-  books.forEach(function(b){
-    var subj=b.subject||'（科目未設定）';
-    var min=b.dailyMin||Math.ceil(b.computed.perDay*2);
-    if(!map[subj])map[subj]=0; map[subj]+=min;
-  });
-  schedRows=schedRows.filter(function(r){return r.cat!=='勉強';});
-  Object.keys(map).forEach(function(s){
-    schedRows.push({id:'r'+(schedRowIdSeq++),label:s,startTime:'',min:map[s],cat:'勉強',subject:s});
-  });
-  renderAllRows(); schedUpdate();
-  showToast(Object.keys(map).length+'科目の学習時間を引用しました ✓','ok');
+  _impSelected = {};
+  switchImpTab('subject');
+  document.getElementById('imp-modal').style.display='flex';
 }
+function closeImpModal(){
+  document.getElementById('imp-modal').style.display='none';
+}
+
+function switchImpTab(tab){
+  _impTab = tab;
+  _impSelected = {};
+  document.getElementById('imp-tab-subject').classList.toggle('active', tab==='subject');
+  document.getElementById('imp-tab-book').classList.toggle('active', tab==='book');
+  renderImpList();
+}
+
+function renderImpList(){
+  var el = document.getElementById('imp-list');
+  el.innerHTML = '';
+
+  if(_impTab === 'subject'){
+    // 科目ごとに合算
+    var map = {}, order = [];
+    books.forEach(function(b){
+      var subj = b.subject || '（科目未設定）';
+      var min  = b.dailyMin || Math.ceil(b.computed.perDay * 2);
+      if(!map[subj]){ map[subj]=0; order.push(subj); }
+      map[subj] += min;
+    });
+    order.forEach(function(subj){
+      el.appendChild(makeImpItem(subj, subj, map[subj],
+        '合計 '+map[subj]+'分 / '+books.filter(function(b){return (b.subject||'（科目未設定）')===subj;}).length+'冊'));
+    });
+  } else {
+    // 参考書ごと
+    var sorted = books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
+    sorted.forEach(function(b){
+      var min = b.dailyMin || Math.ceil(b.computed.perDay * 2);
+      el.appendChild(makeImpItem(b.id, b.name, min,
+        (b.subject||'科目未設定') + '　' + b.computed.perDay + '題/日'));
+    });
+  }
+}
+
+function makeImpItem(key, name, min, sub){
+  var div = document.createElement('div');
+  div.className = 'imp-item' + (_impSelected[key] ? ' selected' : '');
+  div.innerHTML =
+    '<div class="imp-item-check"><span class="imp-item-check-mark">✓</span></div>'+
+    '<div class="imp-item-body">'+
+      '<div class="imp-item-name">'+esc(name)+'</div>'+
+      '<div class="imp-item-sub">'+esc(sub)+'</div>'+
+    '</div>'+
+    '<div class="imp-item-min">'+min+'分</div>';
+  div.onclick = function(){
+    if(_impSelected[key]) delete _impSelected[key];
+    else _impSelected[key] = true;
+    div.classList.toggle('selected', !!_impSelected[key]);
+    var check = div.querySelector('.imp-item-check-mark');
+    if(check) check.style.display = _impSelected[key] ? 'block' : 'none';
+  };
+  return div;
+}
+
+function toggleImpAll(){
+  var allKeys;
+  if(_impTab === 'subject'){
+    var map={};
+    books.forEach(function(b){ var s=b.subject||'（科目未設定）'; map[s]=true; });
+    allKeys = Object.keys(map);
+  } else {
+    allKeys = books.map(function(b){return b.id;});
+  }
+  // 全選択か全解除か判定
+  var allSel = allKeys.every(function(k){return _impSelected[k];});
+  _impSelected = {};
+  if(!allSel) allKeys.forEach(function(k){_impSelected[k]=true;});
+  renderImpList();
+}
+
+function applyImpModal(){
+  var keys = Object.keys(_impSelected);
+  if(keys.length===0){showToast('引用する項目を選択してください','err');return;}
+
+  // 既存の勉強行を削除して置換
+  schedRows = schedRows.filter(function(r){return r.cat!=='勉強';});
+
+  if(_impTab === 'subject'){
+    // 科目単位
+    var map={}, order=[];
+    books.forEach(function(b){
+      var subj=b.subject||'（科目未設定）';
+      var min=b.dailyMin||Math.ceil(b.computed.perDay*2);
+      if(!map[subj]){map[subj]=0;order.push(subj);}
+      map[subj]+=min;
+    });
+    order.filter(function(s){return _impSelected[s];}).forEach(function(s){
+      schedRows.push({id:'r'+(schedRowIdSeq++),label:s,startTime:'',min:map[s],cat:'勉強',subject:s});
+    });
+  } else {
+    // 参考書個別
+    var sorted=books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
+    sorted.filter(function(b){return _impSelected[b.id];}).forEach(function(b){
+      var min=b.dailyMin||Math.ceil(b.computed.perDay*2);
+      var label=(b.subject?b.subject+'：':'')+b.name;
+      schedRows.push({id:'r'+(schedRowIdSeq++),label:label,startTime:'',min:min,cat:'勉強',subject:b.subject||b.name});
+    });
+  }
+
+  renderAllRows(); schedUpdate();
+  closeImpModal();
+  showToast(keys.length+'件の学習時間を引用しました ✓','ok');
+}
+
+// 旧関数は互換性のために残す
+function importStudyFromBooks(){ openImpModal(); }
 
 // ---- 矛盾チェック & 合計更新 ----
 function schedUpdate(){
