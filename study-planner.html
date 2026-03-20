@@ -451,24 +451,11 @@ body.gantt-active #pane-gantt{width:100%;}
   padding:10px;color:#5dbb5d;font-family:"Noto Sans JP",sans-serif;font-size:12px;
   font-weight:700;cursor:pointer;transition:all .2s;width:100%;}
 .btn-import-study:hover{background:#254a25;}
-.sched-row{display:grid;grid-template-columns:80px 1fr 72px 22px auto;align-items:center;
-  gap:6px;padding:7px 0;border-bottom:1px solid var(--border2);}
+/* sched-row はRESPONSIVEセクションでflex定義 */
 .sched-row:last-child{border-bottom:none;}
-.sched-row-time input[type=time]{background:var(--bg-input);border:1px solid var(--border-input);
-  border-radius:8px;padding:6px 8px;color:var(--text);font-family:"DM Mono",monospace;
-  font-size:12px;outline:none;width:100%;transition:border-color .2s;}
-.sched-row-time input[type=time]:focus{border-color:var(--gold);}
-.sched-row-label{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;}
 .sched-row-label select{width:100%;}
-.sched-row-min input{background:var(--bg-input);border:1px solid var(--border-input);border-radius:8px;
-  padding:6px 8px;color:var(--text);font-family:"DM Mono",monospace;font-size:13px;
-  outline:none;width:100%;text-align:right;transition:border-color .2s;}
-.sched-row-min input:focus{border-color:var(--gold);}
-.sched-row-unit{font-size:11px;color:var(--text3);}
-.sched-row-err{font-size:10px;color:var(--red);white-space:nowrap;min-width:80px;}
-.sched-col-hd{display:grid;grid-template-columns:80px 1fr 72px 22px auto;
-  gap:6px;padding:4px 0 6px;border-bottom:1px solid #333;margin-bottom:2px;}
+.sched-col-hd{display:flex;align-items:center;gap:6px;
+  padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
 .sched-col-hd span{font-family:"DM Mono",monospace;font-size:8px;color:var(--text3);
   letter-spacing:.1em;text-transform:uppercase;}
 @media print{
@@ -703,24 +690,47 @@ body.gantt-active #pane-gantt{width:100%;}
 .settings-io-btns{display:flex;flex-direction:column;gap:10px;}
 
 /* ===================== RESPONSIVE ===================== */
-/* fluid base */
 html{box-sizing:border-box;}
 *,*::before,*::after{box-sizing:inherit;}
-body{padding:20px 16px 100px;overflow-x:hidden;}
-.wrap{width:100%;max-width:720px;margin:0 auto;}
 
-/* タブ：全幅横スクロール */
+/* ベースレイアウト */
+body{padding:24px 20px 100px;overflow-x:hidden;}
+.wrap{width:100%;max-width:min(740px, 96vw);margin:0 auto;}
+
+/* タブ：横スクロール、ボタン重なり防止 */
 .tabs{gap:3px;padding:3px;overflow-x:auto;flex-wrap:nowrap;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{flex:0 0 auto;font-size:clamp(11px,1.8vw,13px);
-  padding:9px clamp(8px,1.5vw,12px);white-space:nowrap;border-radius:9px;}
+.tab{flex:0 0 auto;font-size:clamp(11px,1.5vw,13px);
+  padding:9px clamp(8px,1.2vw,14px);white-space:nowrap;border-radius:9px;}
 
-/* スケジュール行の基本 */
-.sched-row{grid-template-columns:76px 1fr 64px 18px 24px auto;gap:4px;}
-.sched-col-hd{grid-template-columns:76px 1fr 64px 18px 24px auto;gap:4px;}
-.sched-row-err{font-size:10px;color:var(--red);white-space:nowrap;
-  min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+/* スケジュール行：時刻+ラベル+分+単位+削除+エラー */
+/* ラベル列は flex で縮めて重ならないよう制御 */
+.sched-row{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 0;border-bottom:1px solid var(--border2);}
+.sched-row:last-child{border-bottom:none;}
+.sched-col-hd{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+.sched-row-time{flex:0 0 76px;}
+.sched-row-time input[type=time]{
+  width:100%;background:var(--bg-input);border:1px solid var(--border-input);
+  border-radius:8px;padding:6px 6px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:13px;outline:none;}
+.sched-row-time input[type=time]:focus{border-color:var(--gold);}
+.sched-row-label{flex:1;min-width:0;}
+.sched-row-label select{width:100%;}
+.sched-row-min{flex:0 0 64px;}
+.sched-row-min input{
+  width:100%;background:var(--bg-input);border:1px solid var(--border-input);
+  border-radius:8px;padding:6px 8px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:13px;
+  outline:none;text-align:right;}
+.sched-row-min input:focus{border-color:var(--gold);}
+.sched-row-unit{flex:0 0 18px;font-size:11px;color:var(--text3);}
+.sched-row-err{flex:0 1 auto;font-size:10px;color:var(--red);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 
 /* ---- スマホ 〜 480px ---- */
 @media(max-width:480px){
@@ -728,71 +738,73 @@ body{padding:20px 16px 100px;overflow-x:hidden;}
   .wrap{max-width:100%;}
   .hd-title{font-size:clamp(20px,7vw,32px);}
   .card{padding:14px 12px;}
-  .row3{grid-template-columns:1fr 1fr;}
-  .row-date{grid-template-columns:1fr 1fr;}
+  .row3,.row-date{grid-template-columns:1fr 1fr;}
   .act-row{grid-template-columns:1fr;}
   .btn-row{flex-direction:column;}
   .btn-row .btn-gold,.btn-row .btn-ghost{flex:none;}
-  /* スケジュール */
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row{grid-template-columns:64px 1fr 52px 16px 22px auto;gap:2px;}
-  .sched-col-hd{grid-template-columns:64px 1fr 52px 16px 22px auto;gap:2px;}
-  .sched-row-time input[type=time]{font-size:10px;padding:4px 4px;}
-  .sched-row-min input{font-size:11px;padding:4px 4px;width:50px;}
+  .sched-row-time{flex:0 0 66px;}
+  .sched-row-time input[type=time]{font-size:11px;padding:5px 4px;}
+  .sched-row-min{flex:0 0 52px;}
+  .sched-row-min input{font-size:11px;padding:5px 5px;}
   .sched-row-err{display:none;}
-  /* 一覧 */
   .list-header{flex-direction:column;align-items:flex-start;gap:8px;}
   .list-header>div{flex-wrap:wrap;gap:6px;width:100%;}
   .btn-pdf-all{font-size:11px;padding:7px 10px;}
   .bi-hero-row{flex-direction:column;}
-  /* ガント */
   .gantt-toolbar{flex-direction:column;gap:6px;}
   .gantt-toolbar-left{flex-wrap:wrap;gap:6px;}
-  /* 設定 */
   .color-swatches{grid-template-columns:repeat(5,1fr);}
   .settings-io-btns .btn-io{font-size:11px;justify-content:center;}
 }
 
-/* ---- iPad mini / 小タブレット 481〜768px ---- */
+/* ---- 小タブレット 481〜768px ---- */
 @media(min-width:481px) and (max-width:768px){
-  body{padding:16px 16px 90px;}
+  body{padding:16px 18px 90px;}
   .wrap{max-width:100%;}
-  .card{padding:18px 16px;}
-  .row3{grid-template-columns:1fr 1fr 1fr;}
-  .row-date{grid-template-columns:1fr 1fr 1fr;}
+  .card{padding:18px 18px;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row{grid-template-columns:72px 1fr 60px 18px 22px auto;gap:4px;}
-  .sched-col-hd{grid-template-columns:72px 1fr 60px 18px 22px auto;gap:4px;}
-  .sched-row-err{max-width:80px;}
+  .sched-row-time{flex:0 0 72px;}
+  .sched-row-min{flex:0 0 60px;}
+  .sched-row-err{display:none;}
   .list-header>div{flex-wrap:wrap;gap:6px;}
   .btn-pdf-all{font-size:12px;padding:8px 12px;}
   .color-swatches{grid-template-columns:repeat(5,1fr);}
 }
 
-/* ---- iPad / 大タブレット 769〜1024px ---- */
+/* ---- iPad / タブレット 769〜1024px ---- */
 @media(min-width:769px) and (max-width:1024px){
-  body{padding:24px 24px 100px;}
-  .wrap{max-width:100%;max-width:900px;}
-  .card{padding:22px 24px;}
-  .row3{grid-template-columns:1fr 1fr 1fr;}
-  .sched-row{grid-template-columns:80px 1fr 68px 20px 24px auto;gap:6px;}
-  .sched-col-hd{grid-template-columns:80px 1fr 68px 20px 24px auto;gap:6px;}
+  body{padding:28px 32px 100px;}
+  .wrap{width:100%;max-width:860px;}
+  .card{padding:22px 26px;}
+  .sched-grid{grid-template-columns:1fr 1fr;}
+  .sched-row-time{flex:0 0 80px;}
+  .sched-row-min{flex:0 0 68px;}
+  .sched-row-err{display:none;}
   .gantt-toolbar{flex-wrap:wrap;}
-  body.gantt-active .wrap{max-width:100%;padding:0 16px;}
-  body.gantt-active .tabs{max-width:900px;margin:0 auto;}
+  body.gantt-active .wrap{max-width:100%;padding:0 24px;}
+  body.gantt-active .tabs{max-width:860px;margin:0 auto;}
 }
 
-/* ---- PC 1025px〜 ---- */
-@media(min-width:1025px){
+/* ---- 大型iPad / PC 1025〜1366px ---- */
+@media(min-width:1025px) and (max-width:1366px){
+  body{padding:32px 36px 100px;}
+  .wrap{max-width:920px;}
+  body.gantt-active .wrap{max-width:100%;padding:0 32px;}
+  body.gantt-active .tabs{max-width:920px;margin:0 auto;}
+}
+
+/* ---- PC 1367px〜 ---- */
+@media(min-width:1367px){
   body{padding:36px 24px 100px;}
-  .wrap{max-width:740px;margin:0 auto;}
-  body.gantt-active .wrap{max-width:none;padding:0 24px;}
-  body.gantt-active .tabs{max-width:740px;margin:0 auto;}
+  .wrap{max-width:760px;margin:0 auto;}
+  body.gantt-active .wrap{max-width:none;padding:0 40px;}
+  body.gantt-active .tabs{max-width:760px;margin:0 auto;}
 }
 
-/* ---- 大型PC 1400px〜 ---- */
-@media(min-width:1400px){
-  body.gantt-active .wrap{padding:0 48px;}
+/* ---- 大型PC 1600px〜 ---- */
+@media(min-width:1600px){
+  body.gantt-active .wrap{padding:0 60px;}
 }
 
 /* スウォッチ hover ラベル */
