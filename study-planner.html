@@ -704,33 +704,42 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
 .tab{flex:0 0 auto;font-size:clamp(11px,1.5vw,13px);
   padding:9px clamp(8px,1.2vw,14px);white-space:nowrap;border-radius:9px;}
 
-/* スケジュール行：時刻+ラベル+分+単位+削除+エラー */
-/* ラベル列は flex で縮めて重ならないよう制御 */
+/* ---- スケジュール行 ---- */
+/* 列：時刻(80px) | ラベル(1fr) | 分(56px) | 単位(20px) | 削除(28px) */
 .sched-row{
-  display:flex;align-items:center;gap:6px;
-  padding:8px 0;border-bottom:1px solid var(--border2);}
+  display:grid;
+  grid-template-columns:80px 1fr 56px 20px 28px;
+  align-items:center;gap:6px;
+  padding:9px 0;border-bottom:1px solid var(--border2);}
 .sched-row:last-child{border-bottom:none;}
 .sched-col-hd{
-  display:flex;align-items:center;gap:6px;
-  padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
-.sched-row-time{flex:0 0 76px;}
+  display:grid;
+  grid-template-columns:80px 1fr 56px 20px 28px;
+  align-items:center;gap:6px;
+  padding:4px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px;}
 .sched-row-time input[type=time]{
   width:100%;background:var(--bg-input);border:1px solid var(--border-input);
-  border-radius:8px;padding:6px 6px;color:var(--text);
-  font-family:'DM Mono',monospace;font-size:13px;outline:none;}
+  border-radius:8px;padding:7px 5px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:13px;outline:none;
+  transition:border-color .2s;}
 .sched-row-time input[type=time]:focus{border-color:var(--gold);}
-.sched-row-label{flex:1;min-width:0;}
+.sched-row-label{min-width:0;overflow:hidden;font-size:13px;color:var(--text);}
 .sched-row-label select{width:100%;}
-.sched-row-min{flex:0 0 64px;}
 .sched-row-min input{
   width:100%;background:var(--bg-input);border:1px solid var(--border-input);
-  border-radius:8px;padding:6px 8px;color:var(--text);
+  border-radius:8px;padding:7px 5px;color:var(--text);
   font-family:'DM Mono',monospace;font-size:13px;
-  outline:none;text-align:right;}
+  outline:none;text-align:right;transition:border-color .2s;}
 .sched-row-min input:focus{border-color:var(--gold);}
-.sched-row-unit{flex:0 0 18px;font-size:11px;color:var(--text3);}
-.sched-row-err{flex:0 1 auto;font-size:10px;color:var(--red);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.sched-row-unit{font-size:12px;color:var(--text3);text-align:left;}
+.btn-sched-del{background:transparent;border:none;color:var(--text3);font-size:15px;
+  cursor:pointer;padding:0;width:28px;text-align:center;transition:color .2s;}
+.btn-sched-del:hover{color:#cc4444;}
+/* エラーは行の下にフルワイド表示 */
+.sched-row-err{display:none;}
+.sched-row-err.has-err{
+  display:block;grid-column:2 / 6;font-size:10px;color:var(--red);
+  padding:2px 0 4px;margin-top:-4px;}
 
 /* ---- スマホ 〜 480px ---- */
 @media(max-width:480px){
@@ -743,11 +752,10 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .btn-row{flex-direction:column;}
   .btn-row .btn-gold,.btn-row .btn-ghost{flex:none;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row-time{flex:0 0 66px;}
+  .sched-row{grid-template-columns:68px 1fr 50px 18px 26px;}
+  .sched-col-hd{grid-template-columns:68px 1fr 50px 18px 26px;}
   .sched-row-time input[type=time]{font-size:11px;padding:5px 4px;}
-  .sched-row-min{flex:0 0 52px;}
-  .sched-row-min input{font-size:11px;padding:5px 5px;}
-  .sched-row-err{display:none;}
+  .sched-row-min input{font-size:11px;padding:5px 4px;}
   .list-header{flex-direction:column;align-items:flex-start;gap:8px;}
   .list-header>div{flex-wrap:wrap;gap:6px;width:100%;}
   .btn-pdf-all{font-size:11px;padding:7px 10px;}
@@ -764,9 +772,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .wrap{max-width:100%;}
   .card{padding:18px 18px;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row-time{flex:0 0 72px;}
-  .sched-row-min{flex:0 0 60px;}
-  .sched-row-err{display:none;}
+  .sched-row{grid-template-columns:74px 1fr 54px 18px 26px;}
+  .sched-col-hd{grid-template-columns:74px 1fr 54px 18px 26px;}
   .list-header>div{flex-wrap:wrap;gap:6px;}
   .btn-pdf-all{font-size:12px;padding:8px 12px;}
   .color-swatches{grid-template-columns:repeat(5,1fr);}
@@ -778,9 +785,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .wrap{width:100%;max-width:860px;}
   .card{padding:22px 26px;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row-time{flex:0 0 80px;}
-  .sched-row-min{flex:0 0 68px;}
-  .sched-row-err{display:none;}
+  .sched-row{grid-template-columns:80px 1fr 60px 20px 28px;}
+  .sched-col-hd{grid-template-columns:80px 1fr 60px 20px 28px;}
   .gantt-toolbar{flex-wrap:wrap;}
   body.gantt-active .wrap{max-width:100%;padding:0 24px;}
   body.gantt-active .tabs{max-width:860px;margin:0 auto;}
@@ -2117,6 +2123,7 @@ function makeRowEl(row, isStudy){
   div.appendChild(minWrap);
   div.appendChild(unit);
 
+  // 削除ボタン（固定行は空のspanでグリッド列を埋める）
   if(!row.fixed){
     var del = document.createElement('button');
     del.className = 'btn-sched-del'; del.textContent = '✕';
@@ -2125,7 +2132,14 @@ function makeRowEl(row, isStudy){
       renderAllRows(); schedUpdate();
     };})(row);
     div.appendChild(del);
+  } else {
+    var placeholder = document.createElement('span');
+    div.appendChild(placeholder);
   }
+
+  // エラーはgrid外・非表示（has-errクラスで表示）
+  // errSpanはdivの後ろに付けず、行内に置く（grid-column:2/6でフルワイド）
+  errSpan.style.cssText = 'display:none;';
   div.appendChild(errSpan);
   return div;
 }
@@ -2353,7 +2367,7 @@ function schedUpdate(){
 
   // エラークリア
   schedRows.forEach(function(r){
-    var e=document.getElementById('err-'+r.id); if(e)e.textContent='';
+    var e=document.getElementById('err-'+r.id); if(e){e.textContent='';e.style.cssText='display:none;';}
   });
 
   // 時刻ありの行をソートして矛盾チェック
@@ -2369,7 +2383,7 @@ function schedUpdate(){
     var nxtN=normMin(nxtStart,wMin);
     if(curEndN>nxtN+1){
       var e=document.getElementById('err-'+nxt.id);
-      if(e) e.textContent='⚠ '+minToTime(curEnd%1440)+'終了と重複';
+      if(e){e.textContent='⚠ '+minToTime(curEnd%1440)+'終了と重複';e.style.cssText='display:block;grid-column:2/6;font-size:10px;color:var(--red);padding:2px 0 4px;';}
     }
   }
 
