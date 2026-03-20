@@ -641,6 +641,48 @@ body.gantt-active #pane-gantt{width:100%;}
   color:var(--text3);font-family:'Noto Sans JP',sans-serif;font-size:13px;
   cursor:pointer;transition:all .2s;}
 .imp-cancel:hover{border-color:#555;color:#aaa;}
+
+/* ===================== CHART POPOVER ===================== */
+.cpop{position:absolute;z-index:500;background:#1e1e1e;border:1px solid #3a3a3a;
+  border-radius:14px;padding:16px;min-width:260px;max-width:290px;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);pointer-events:all;}
+.cpop-arrow{position:absolute;width:10px;height:10px;background:#1e1e1e;
+  border-left:1px solid #3a3a3a;border-top:1px solid #3a3a3a;
+  transform:rotate(45deg);}
+.cpop-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.cpop-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cpop-lbl{font-size:11px;color:var(--text3);width:52px;flex-shrink:0;}
+.cpop-inp{background:#111;border:1px solid #333;border-radius:7px;
+  padding:6px 9px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;
+  outline:none;width:100%;transition:border-color .2s;}
+.cpop-inp:focus{border-color:var(--gold);}
+.cpop-sel{background:#111;border:1px solid #333;border-radius:7px;
+  padding:6px 9px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:12px;
+  outline:none;width:100%;transition:border-color .2s;cursor:pointer;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;}
+.cpop-sel:focus{border-color:var(--gold);}
+.cpop-sel option{background:#222;}
+.cpop-sel optgroup{background:#1a1a1a;color:var(--gold);}
+.cpop-shift-chk{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);
+  margin-top:8px;margin-bottom:2px;cursor:pointer;}
+.cpop-shift-chk input{accent-color:var(--gold);cursor:pointer;}
+.cpop-badge-free{font-size:10px;color:var(--gold);background:#1a1a00;
+  border:1px solid #3a3000;border-radius:5px;padding:2px 7px;
+  display:inline-block;margin-bottom:10px;}
+.cpop-del{background:transparent;border:1px solid #442222;border-radius:8px;padding:8px;
+  color:#cc4444;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;
+  grid-column:span 2;margin-top:4px;}
+.cpop-del:hover{background:#1a0000;}
+.cpop-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.cpop-save{background:var(--gold);border:none;border-radius:8px;padding:8px;
+  color:#0d0d0d;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.cpop-save:hover{background:var(--gold2);}
+.cpop-cancel{background:transparent;border:1px solid #333;border-radius:8px;padding:8px;
+  color:var(--text3);font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;}
+.cpop-cancel:hover{border-color:#555;color:#aaa;}
+#chart-wrap-inner{position:relative;}
 </style>
 </head>
 <body>
@@ -2258,6 +2300,24 @@ function _schedDraw(){
     path.setAttribute('stroke','#0d0d0d');
     path.setAttribute('stroke-width','1.5');
     path.setAttribute('opacity','0.92');
+    path.style.cursor='pointer';
+    // クリックでポップオーバー
+    (function(sg, pathEl){
+      pathEl.addEventListener('click', function(e){
+        e.stopPropagation();
+        openChartPop(sg, pathEl, e);
+      });
+      pathEl.addEventListener('mouseenter', function(){
+        pathEl.setAttribute('opacity','1.0');
+        pathEl.setAttribute('stroke','#fff');
+        pathEl.setAttribute('stroke-width','2');
+      });
+      pathEl.addEventListener('mouseleave', function(){
+        pathEl.setAttribute('opacity','0.92');
+        pathEl.setAttribute('stroke','#0d0d0d');
+        pathEl.setAttribute('stroke-width','1.5');
+      });
+    })(seg, path);
     svg.appendChild(path);
 
     // ラベル（セクターの中央に）
@@ -2345,6 +2405,8 @@ function _schedDraw(){
   wrap.innerHTML=''; wrap.appendChild(svg);
   var chartWrap=document.getElementById('chart-wrap-inner');
   chartWrap.innerHTML=''; chartWrap.appendChild(wrap);
+  // SVG外クリックでポップオーバーを閉じる
+  svg.addEventListener('click', function(){ closeChartPop(); });
 
   // 凡例
   var legendEl=document.getElementById('chart-legend');
@@ -2356,6 +2418,13 @@ function _schedDraw(){
     var txt=document.createElement('span');
     txt.textContent=(seg.row.startTime?seg.row.startTime+' ':'')+seg.label+' '+minToHM(seg.min);
     item.appendChild(dot); item.appendChild(txt);
+    // 凡例クリックでも編集可
+    item.style.cursor='pointer';
+    item.title='クリックして編集';
+    (function(sg){ item.addEventListener('click', function(e){
+      e.stopPropagation();
+      openChartPopFromLegend(sg, item);
+    }); })(seg);
     legendEl.appendChild(item);
   });
 
@@ -2364,6 +2433,291 @@ function _schedDraw(){
   window._schedAwake=awake; window._schedFree=freeMin;
   window._schedSvg=svg;
 }
+
+// ---- 円グラフ セクター編集ポップオーバー ----
+var _cpopSeg = null;
+
+function openChartPop(seg, pathEl, e){
+  // 自由時間は新規追加モード
+  _cpopSeg = seg;
+  var pop = getOrCreatePop();
+  fillPop(seg);
+
+  // セクターの中心付近に表示
+  var svgRect = pathEl.ownerSVGElement.getBoundingClientRect();
+  var wrapRect = document.getElementById('chart-wrap-inner').getBoundingClientRect();
+
+  // セクター中心角からポップの位置を計算
+  var midDeg = (seg.startMin + seg.min/2) / 1440 * 360 - 90; // ラジアン基準
+  var rad = midDeg * Math.PI / 180;
+  var R = 140 * (svgRect.width/320); // スケール調整
+  var cx = svgRect.left - wrapRect.left + svgRect.width/2;
+  var cy = svgRect.top  - wrapRect.top  + svgRect.height/2;
+  var px = cx + Math.cos(rad) * R * 0.7;
+  var py = cy + Math.sin(rad) * R * 0.7;
+
+  // ポップが画面内に収まるよう調整
+  var popW = 230, popH = 160;
+  var wrapW = wrapRect.width;
+  px = Math.max(4, Math.min(px, wrapW - popW - 4));
+  py = Math.max(4, py);
+
+  pop.style.left = px + 'px';
+  pop.style.top  = py + 'px';
+  pop.style.display = 'block';
+}
+
+function openChartPopFromLegend(seg, legendItem){
+  // 自由時間は新規追加
+  _cpopSeg = seg;
+  var pop = getOrCreatePop();
+  fillPop(seg);
+
+  // 凡例アイテムの位置に出す
+  var wrapRect = document.getElementById('chart-wrap-inner').getBoundingClientRect();
+  var itemRect = legendItem.getBoundingClientRect();
+  var px = itemRect.left - wrapRect.left;
+  var py = itemRect.bottom - wrapRect.top + 6;
+
+  var popW = 230;
+  var wrapW = wrapRect.width;
+  px = Math.max(4, Math.min(px, wrapW - popW - 4));
+
+  pop.style.left = px + 'px';
+  pop.style.top  = py + 'px';
+  pop.style.display = 'block';
+}
+
+function getOrCreatePop(){
+  var pop = document.getElementById('chart-popover');
+  if(!pop){
+    pop = document.createElement('div');
+    pop.id = 'chart-popover';
+    pop.className = 'cpop';
+    pop.style.display = 'none';
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.getElementById('chart-wrap-inner').appendChild(pop);
+  }
+  return pop;
+}
+
+function escHtmlC(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// 科目・参考書セレクトのHTML文字列を生成
+function buildCpopSelectHTML(selected){
+  var groups=[
+    {label:'数学',opts:['数学','数学I・A','数学II・B','数学III・C']},
+    {label:'英語',opts:['英語','英語（読解）','英語（文法）','英語（語彙）','英語（リスニング）','英語（英作文）']},
+    {label:'国語',opts:['国語','現代文','古文','漢文']},
+    {label:'理科',opts:['理科','物理','化学','生物','地学']},
+    {label:'社会',opts:['社会','日本史','世界史','地理','倫理','政治・経済','倫理・政治経済','現代社会']},
+    {label:'情報・その他',opts:['情報','小論文','面接']}
+  ];
+  var html='<select class="cpop-sel" id="cpop-subj"><option value="">── 種別を選択 ──</option>';
+  // 登録済み参考書
+  if(books.length>0){
+    html+='<optgroup label="📚 登録済み参考書">';
+    books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);}).forEach(function(b){
+      var v='book:'+b.id;
+      var sel=(selected===v)?'selected':'';
+      html+='<option value="'+v+'" '+sel+'>'+escHtmlC((b.subject?'['+b.subject+'] ':'')+b.name)+'</option>';
+    });
+    html+='</optgroup>';
+  }
+  // 科目
+  groups.forEach(function(g){
+    html+='<optgroup label="'+g.label+'">';
+    g.opts.forEach(function(o,oi){
+      var sel=(selected===o)?'selected':'';
+      html+='<option value="'+o+'" '+sel+'>'+(oi===0?o+'（大項目）':'　'+o)+'</option>';
+    });
+    html+='</optgroup>';
+  });
+  html+='<option value="life_other">生活（その他）</option>';
+  html+='</select>';
+  return html;
+}
+
+function fillPop(seg){
+  var pop = document.getElementById('chart-popover');
+  var isFree = seg.cat==='自由';
+  var isFixed = seg.row && seg.row.fixed;
+  var isStudy = seg.row && seg.row.cat==='勉強';
+
+  if(isFree){
+    // 自由時間 → 新規行挿入UI
+    var startM = seg.startMin;
+    pop.innerHTML =
+      '<div class="cpop-badge-free">＋ 新しい行動を追加</div>'+
+      '<div class="cpop-row"><span class="cpop-lbl">種別</span>'+buildCpopSelectHTML('')+'</div>'+
+      '<div class="cpop-row"><span class="cpop-lbl">名前</span>'+
+        '<input class="cpop-inp" type="text" id="cpop-label" placeholder="行動名">'+
+      '</div>'+
+      '<div class="cpop-row"><span class="cpop-lbl">開始時刻</span>'+
+        '<input class="cpop-inp" type="time" id="cpop-time" value="'+minToTime(startM)+'">'+
+      '</div>'+
+      '<div class="cpop-row"><span class="cpop-lbl">時間（分）</span>'+
+        '<input class="cpop-inp" type="number" id="cpop-min" min="1" max="'+(seg.min||60)+'" value="'+(Math.min(60,seg.min||60))+'">'+
+      '</div>'+
+      '<label class="cpop-shift-chk"><input type="checkbox" id="cpop-shift" checked>以降の行動を自動シフト</label>'+
+      '<div class="cpop-btns">'+
+        '<button class="cpop-save" onclick="saveChartPop(true)">追加</button>'+
+        '<button class="cpop-cancel" onclick="closeChartPop()">閉じる</button>'+
+      '</div>';
+    // 種別変更でラベルを自動補完
+    setTimeout(function(){
+      var sel=document.getElementById('cpop-subj');
+      if(sel) sel.onchange=function(){
+        var lbl=document.getElementById('cpop-label');
+        if(!lbl||lbl.value) return;
+        var v=this.value;
+        if(v.indexOf('book:')===0){
+          var b=books.find(function(b){return b.id===v.slice(5);});
+          if(b) lbl.value=b.name;
+        } else if(v&&v!=='life_other'){
+          lbl.value=v;
+        }
+      };
+      var inp=document.getElementById('cpop-label');
+      if(inp) inp.focus();
+    },50);
+    return;
+  }
+
+  // 既存行の編集UI
+  var subjVal = isStudy ? (seg.row.bookId?'book:'+seg.row.bookId:(seg.row.subject||'')) : '';
+  pop.innerHTML =
+    '<div class="cpop-name">'+escHtmlC(seg.label)+'</div>'+
+    (isStudy?'<div class="cpop-row"><span class="cpop-lbl">参考書</span>'+buildCpopSelectHTML(subjVal)+'</div>':'')+
+    '<div class="cpop-row"><span class="cpop-lbl">開始時刻</span>'+
+      '<input class="cpop-inp" type="time" id="cpop-time" value="'+(seg.row.startTime||'')+'"'+(isFixed?' disabled':'')+'>'+
+    '</div>'+
+    '<div class="cpop-row"><span class="cpop-lbl">時間（分）</span>'+
+      '<input class="cpop-inp" type="number" id="cpop-min" min="1" max="1440" value="'+seg.min+'">'+
+    '</div>'+
+    '<label class="cpop-shift-chk"><input type="checkbox" id="cpop-shift" checked>以降の行動を自動シフト</label>'+
+    '<div class="cpop-btns">'+
+      '<button class="cpop-save" onclick="saveChartPop(false)">保存</button>'+
+      '<button class="cpop-cancel" onclick="closeChartPop()">閉じる</button>'+
+    '</div>'+
+    (!isFixed?'<button class="cpop-del" onclick="deleteChartRow()">🗑 この行動を削除</button>':'');
+
+  setTimeout(function(){
+    var inp=document.getElementById('cpop-min');
+    if(inp){ inp.focus(); inp.select(); }
+    [document.getElementById('cpop-time'),inp].forEach(function(el){
+      if(el) el.addEventListener('keydown',function(e){if(e.key==='Enter')saveChartPop(false);});
+    });
+  },50);
+}
+
+function saveChartPop(isNew){
+  var timeEl  = document.getElementById('cpop-time');
+  var minEl   = document.getElementById('cpop-min');
+  var subjEl  = document.getElementById('cpop-subj');
+  var labelEl = document.getElementById('cpop-label');
+  var shiftEl = document.getElementById('cpop-shift');
+
+  var newTime = timeEl ? timeEl.value : '';
+  var newMin  = Math.max(1, parseInt(minEl?minEl.value:0)||1);
+  var doShift = shiftEl ? shiftEl.checked : false;
+
+  if(isNew){
+    // 新規行追加
+    var subjV   = subjEl ? subjEl.value : '';
+    var labelV  = labelEl ? labelEl.value.trim() : '';
+    var cat='その他', subject='', bookId=null;
+    if(subjV.indexOf('book:')===0){
+      var b=books.find(function(b){return b.id===subjV.slice(5);});
+      if(b){ cat='勉強'; subject=b.subject||b.name; bookId=b.id; labelV=labelV||b.name; }
+    } else if(subjV==='life_other'){
+      cat='生活';
+    } else if(subjV){
+      cat='勉強'; subject=subjV; labelV=labelV||subjV;
+    }
+    if(!labelV){ showToast('名前を入力してください','err'); return; }
+    var newRow={id:'r'+(schedRowIdSeq++),label:labelV,startTime:newTime,min:newMin,cat:cat,subject:subject,bookId:bookId};
+    schedRows.push(newRow);
+    if(doShift) shiftRowsAfter(newTime, newMin, newRow.id);
+  } else {
+    // 既存行更新
+    if(!_cpopSeg || !_cpopSeg.row){ closeChartPop(); return; }
+    var row=_cpopSeg.row;
+    var oldMin=row.min;
+    var oldTime=row.startTime;
+    var minDiff=newMin-oldMin;
+
+    // 参考書変更
+    if(subjEl){
+      var sv=subjEl.value;
+      if(sv.indexOf('book:')===0){
+        var bk=books.find(function(b){return b.id===sv.slice(5);});
+        if(bk){ row.label=bk.name; row.subject=bk.subject||bk.name; row.bookId=bk.id; row.cat='勉強'; }
+      } else if(sv&&sv!==''){
+        row.subject=sv; row.label=sv; row.bookId=null;
+      }
+    }
+    if(!row.fixed) row.startTime=newTime;
+    row.min=newMin;
+
+    // 以降シフト：開始時刻変更 or 時間増加のとき
+    if(doShift){
+      if(!row.fixed && newTime!==oldTime){
+        var timeDiff=timeToMin(newTime)-timeToMin(oldTime);
+        shiftRowsAfterBy(newTime, timeDiff, row.id);
+      } else if(minDiff>0){
+        var endTime=minToTime(timeToMin(newTime)+newMin);
+        shiftRowsAfter(endTime, minDiff, row.id);
+      }
+    }
+  }
+
+  closeChartPop();
+  schedUpdate();
+  renderAllRows();
+  _schedDraw();
+}
+
+// 指定時刻以降の行をdeltaMin分ずらす（rowIdの行は除く）
+function shiftRowsAfter(fromTime, deltaMin, excludeId){
+  var fromM=timeToMin(fromTime);
+  // 開始時刻でソートして、fromM以降の行を順番にシフト
+  var targets=schedRows.filter(function(r){
+    return r.id!==excludeId && !r.fixed && r.startTime && timeToMin(r.startTime)>=fromM;
+  });
+  targets.sort(function(a,b){return timeToMin(a.startTime)-timeToMin(b.startTime);});
+  targets.forEach(function(r){
+    var m=timeToMin(r.startTime)+deltaMin;
+    r.startTime=minToTime(m);
+  });
+}
+
+function shiftRowsAfterBy(fromTime, deltaMin, excludeId){
+  if(deltaMin===0) return;
+  shiftRowsAfter(fromTime, deltaMin, excludeId);
+}
+
+function deleteChartRow(){
+  if(!_cpopSeg||!_cpopSeg.row) return;
+  var rid=_cpopSeg.row.id;
+  schedRows=schedRows.filter(function(r){return r.id!==rid;});
+  closeChartPop();
+  schedUpdate();
+  renderAllRows();
+  _schedDraw();
+}
+
+function closeChartPop(){
+  var pop = document.getElementById('chart-popover');
+  if(pop) pop.style.display = 'none';
+  _cpopSeg = null;
+}
+
+// ESCで閉じる
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape') closeChartPop();
+});
+
 
 // ---- PDF印刷 ----
 function printSchedule(){
