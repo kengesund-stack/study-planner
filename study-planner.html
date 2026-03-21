@@ -3050,9 +3050,9 @@ function schedReset(){
   if(!confirm('スケジュールをリセットしますか？')) return;
   schedRowIdSeq=0;
   schedRows=buildDefaultRows();
-  renderAllRows(); schedUpdate();
-  document.getElementById('sched-chart-card').classList.add('gone');
-  document.getElementById('sched-form-card').classList.remove('gone');
+  renderAllRows();
+  schedUpdate();
+  setTimeout(_schedDraw, 50);
 }
 
 // ===================== GANTT =====================
@@ -3901,11 +3901,14 @@ function syncSchedToBook(row){
   var book = books.find(function(b){ return b.id === row.bookId; });
   if(!book) return;
   book.dailyMin = row.min;
-  book.computed = compute(book.q, book.rep, book.days);
   saveBooks();
-  // 一覧タブが表示中なら再描画、非表示でも次回open時にrenderListで反映
-  renderList();
-  showToast(book.name + ' → ' + row.min + '分/日 に更新', 'ok');
+  // 一覧タブが表示中なら全カード再描画（確実に反映）
+  var listPane = document.getElementById('pane-list');
+  if(listPane && !listPane.classList.contains('gone')){
+    renderList();
+  }
+  // 次回一覧タブを開いたときも反映される（saveBooks済みなのでrenderListが最新を表示）
+  showToast(book.name + ' の学習時間を ' + row.min + '分/日 に更新しました ✓', 'ok');
 }
 
 // 指定した参考書カードのDOMを差し替え（data-book-id で特定）
