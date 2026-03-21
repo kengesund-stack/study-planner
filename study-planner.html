@@ -1560,7 +1560,7 @@ function renderList(){
               '<div class="bi-stat"><div class="bi-stat-l">反復回数</div><div class="bi-stat-v">'+b.rep+'<span>回</span></div></div>'+
               '<div class="bi-stat"><div class="bi-stat-l">総問題数</div><div class="bi-stat-v">'+c.total.toLocaleString()+'<span>問</span></div></div>'+
               '<div class="bi-stat"><div class="bi-stat-l">推定時間</div><div class="bi-stat-v">'+totalHr+'<span>h</span></div></div>'+
-              (b.dailyMin?'<div class="bi-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+ 
+              (b.dailyMin?'<div class="bi-stat" data-role="min-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+ 
             '</div>'+
           '</div>'+
           '<div class="bi-phases">'+
@@ -1568,17 +1568,17 @@ function renderList(){
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">①</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">ウォームアップ期</div><div class="bi-phase-period">1日目 〜 '+c.p1End+'日目（'+c.p1End+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p1+'<span>題/日</span></div>'+
+              '<div class="bi-phase-val">'+c.p1+'<span>題/日</span>'+(b.dailyMin?'<small style="color:var(--gold);display:block;font-size:9px;font-family:DM Mono,monospace">'+(b.dailyMin/c.p1).toFixed(1)+'分/題</small>':'')+'</div>'+
             '</div>'+
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">②</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">加速期</div><div class="bi-phase-period">'+(c.p1End+1)+'日目 〜 '+c.p2End+'日目（'+(c.p2End-c.p1End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p2+'<span>題/日</span></div>'+
+              '<div class="bi-phase-val">'+c.p2+'<span>題/日</span>'+(b.dailyMin?'<small style="color:var(--gold);display:block;font-size:9px;font-family:DM Mono,monospace">'+(b.dailyMin/c.p2).toFixed(1)+'分/題</small>':'')+'</div>'+
             '</div>'+
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">③</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">完走期</div><div class="bi-phase-period">'+(c.p2End+1)+'日目 〜 '+b.days+'日目（'+(b.days-c.p2End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span></div>'+
+              '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span>'+(b.dailyMin?'<small style="color:var(--gold);display:block;font-size:9px;font-family:DM Mono,monospace">'+(b.dailyMin/c.perDay).toFixed(1)+'分/題</small>':'')+'</div>'+
             '</div>'+
           '</div>'+
           '<div class="bi-actions">'+
