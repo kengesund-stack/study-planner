@@ -3050,9 +3050,9 @@ function schedReset(){
   if(!confirm('スケジュールをリセットしますか？')) return;
   schedRowIdSeq=0;
   schedRows=buildDefaultRows();
-  renderAllRows();
-  schedUpdate();
-  setTimeout(_schedDraw, 50);
+  renderAllRows(); schedUpdate();
+  document.getElementById('sched-chart-card').classList.add('gone');
+  document.getElementById('sched-form-card').classList.remove('gone');
 }
 
 // ===================== GANTT =====================
@@ -3902,12 +3902,7 @@ function syncSchedToBook(row){
   if(!book) return;
   book.dailyMin = row.min;
   saveBooks();
-  // 一覧タブが表示中なら全カード再描画（確実に反映）
-  var listPane = document.getElementById('pane-list');
-  if(listPane && !listPane.classList.contains('gone')){
-    renderList();
-  }
-  // 次回一覧タブを開いたときも反映される（saveBooks済みなのでrenderListが最新を表示）
+  renderList(); // 常に再描画
   showToast(book.name + ' の学習時間を ' + row.min + '分/日 に更新しました ✓', 'ok');
 }
 
