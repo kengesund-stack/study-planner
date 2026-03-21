@@ -1537,6 +1537,7 @@ function renderList(){
     var totalHr=Math.round(c.total*2/60);
     var div=document.createElement('div');
     div.className='book-item';
+    div.setAttribute('data-book-id', b.id);
     div.innerHTML=
       '<div class="bi-top">'+
         '<div class="bi-timeline">'+
@@ -2151,7 +2152,24 @@ function makeRowEl(row, isStudy){
   minWrap.className = 'sched-row-min';
   var minInp = document.createElement('input');
   minInp.type='number'; minInp.min=1; minInp.max=1440; minInp.value=row.min;
-  minInp.onchange=(function(r){return function(){r.min=Math.max(1,parseInt(this.value)||1);syncSchedToBook(r);schedUpdate();schedAutoRedraw();};})(row);
+  (function(r){
+    var _debounce=null;
+    function applyMin(el){
+      var v=Math.max(1,parseInt(el.value)||1);
+      if(r.min===v) return;
+      r.min=v; el.value=v;
+      syncSchedToBook(r);
+      schedUpdate();
+      schedAutoRedraw();
+    }
+    minInp.addEventListener('change', function(){ applyMin(this); });
+    minInp.addEventListener('blur',   function(){ applyMin(this); });
+    minInp.addEventListener('input',  function(){
+      var self=this;
+      clearTimeout(_debounce);
+      _debounce=setTimeout(function(){ applyMin(self); }, 600);
+    });
+  })(row);
   minWrap.appendChild(minInp);
 
   var unit = document.createElement('span');
@@ -3884,14 +3902,86 @@ function syncSchedToBook(row){
   var book = books.find(function(b){ return b.id === row.bookId; });
   if(!book) return;
   var newDailyMin = row.min;
-  if(book.dailyMin === newDailyMin) return; // 変更なし
+  if(book.dailyMin === newDailyMin) return;
   book.dailyMin = newDailyMin;
-  // フェーズ再計算（問題数・反復回数・日数は変えない）
   book.computed = compute(book.q, book.rep, book.days);
   saveBooks();
-  // 一覧表示を更新（表示中なら）
-  var listPane = document.getElementById('pane-list');
-  if(listPane && !listPane.classList.contains('gone')) renderList();
+  // 一覧カードを直接更新（タブ表示状態に関係なく）
+  renderBookItemById(book.id);
+  showToast(book.name + ' の学習時間を ' + newDailyMin + '分/日 に更新しました', 'ok');
+}
+
+// 指定した参考書カードのDOMを差し替え（data-book-id で特定）
+function renderBookItemById(bookId){
+  var book = books.find(function(b){ return b.id === bookId; });
+  if(!book) return;
+  var c = book.computed;
+
+  // data-book-id 属性で直接特定
+  var card = document.querySelector('.book-item[data-book-id="' + bookId + '"]');
+  if(!card){
+    // 一覧タブが未描画なら次回open時にrenderListで反映されるのでOK
+    return;
+  }
+
+  // ① ヒーロー数字（1日ノルマ 題/日）
+  var heroNum = card.querySelector('.bi-hero-num');
+  if(heroNum) heroNum.textContent = c.perDay;
+
+  // ② 1日N分 → 1題あたり スタット
+  var statGrid = card.querySelector('.bi-stats-grid');
+  if(statGrid){
+    var minStat = card.querySelector('[data-role="min-stat"]');
+    if(book.dailyMin && book.dailyMin > 0){
+      if(!minStat){
+        minStat = document.createElement('div');
+        minStat.className = 'bi-stat';
+        minStat.setAttribute('data-role', 'min-stat');
+        statGrid.appendChild(minStat);
+      }
+      minStat.style.cssText = 'grid-column:span 2;background:#1a1a00;border-color:#3a3000;';
+      minStat.innerHTML =
+        '<div class="bi-stat-l">1日' + book.dailyMin + '分 → 1題あたり</div>' +
+        '<div class="bi-stat-v" style="color:var(--gold)">' +
+          '① ' + (book.dailyMin / c.p1).toFixed(1) + '分　' +
+          '② ' + (book.dailyMin / c.p2).toFixed(1) + '分　' +
+          '③ ' + (book.dailyMin / c.perDay).toFixed(1) + '分' +
+        '</div>';
+    } else if(minStat){
+      minStat.remove();
+    }
+  }
+
+  // ③ フェーズ計画
+  var phases = card.querySelector('.bi-phases');
+  if(phases){
+    phases.innerHTML =
+      '<div class="bi-phase-title">📈 フェーズ計画</div>' +
+      '<div class="bi-phase-row">' +
+        '<div class="bi-phase-num">①</div>' +
+        '<div class="bi-phase-info">' +
+          '<div class="bi-phase-name">ウォームアップ期</div>' +
+          '<div class="bi-phase-period">1日目 〜 ' + c.p1End + '日目（' + c.p1End + '日間）</div>' +
+        '</div>' +
+        '<div class="bi-phase-val">' + c.p1 + '<span>題/日</span></div>' +
+      '</div>' +
+      '<div class="bi-phase-row">' +
+        '<div class="bi-phase-num">②</div>' +
+        '<div class="bi-phase-info">' +
+          '<div class="bi-phase-name">加速期</div>' +
+          '<div class="bi-phase-period">' + (c.p1End+1) + '日目 〜 ' + c.p2End + '日目（' + (c.p2End-c.p1End) + '日間）</div>' +
+        '</div>' +
+        '<div class="bi-phase-val">' + c.p2 + '<span>題/日</span></div>' +
+      '</div>' +
+      '<div class="bi-phase-row">' +
+        '<div class="bi-phase-num">③</div>' +
+        '<div class="bi-phase-info">' +
+          '<div class="bi-phase-name">完走期</div>' +
+          '<div class="bi-phase-period">' + (c.p2End+1) + '日目 〜 ' + book.days + '日目（' + (book.days-c.p2End) + '日間）</div>' +
+        '</div>' +
+        '<div class="bi-phase-val">' + c.perDay + '<span>題/日</span></div>' +
+      '</div>';
+  }
 }
 
 // 参考書 → スケジュール行（dailyMin変更時）
