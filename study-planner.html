@@ -917,8 +917,9 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
         </div>
         <div class="ig">
           <label>1日の学習時間</label>
-          <input type="number" id="daily-min" class="mono" placeholder="60" min="1">
-          <div class="hint">分/日（任意）</div>
+          <input type="number" id="daily-min" class="mono" placeholder="60" min="1"
+            onchange="onDailyMinChange()">
+          <div class="hint" id="daily-min-hint">分/日（任意）</div>
         </div>
       </div>
       <div class="row-date">
@@ -1385,6 +1386,26 @@ function compute(q,rep,days){
   };
 }
 
+// daily-min 変更時：編集中の参考書のスケジュール行も同期プレビュー
+function onDailyMinChange(){
+  var editId = document.getElementById('edit-id').value;
+  var newMin = parseInt(document.getElementById('daily-min').value)||0;
+  var hint = document.getElementById('daily-min-hint');
+  if(!editId || !newMin){ if(hint) hint.textContent='分/日（任意）'; return; }
+  // 連動しているスケジュール行を探す
+  var linked = schedRows.filter(function(r){return r.bookId===editId;});
+  if(hint){
+    if(linked.length>0){
+      hint.textContent = '分/日 ← スケジュール「'+linked.map(function(r){return r.label;}).join('・')+'」と連動';
+      hint.style.color = 'var(--gold)';
+    } else {
+      hint.textContent = '分/日（任意）';
+      hint.style.color = '';
+    }
+  }
+}
+
+
 // ===================== SUBJECT =====================
 function onSubjectChange(){
   var v=document.getElementById('subject-select').value;
@@ -1432,6 +1453,8 @@ function saveBook(){
   currentBook=book;
   showResult(book);
   resetEditState();
+  // スケジュール行の dailyMin も同期
+  if(book.dailyMin){ syncBookToSched(book.id, book.dailyMin); }
 }
 
 // ===================== SHOW RESULT =====================
@@ -1590,6 +1613,8 @@ function editBook(id){
   document.getElementById('save-btn').textContent='更新して計算 →';
   document.getElementById('cancel-btn').style.display='';
   window.scrollTo({top:0,behavior:'smooth'});
+  // スケジュール連動ヒントを表示
+  onDailyMinChange();
 }
 function deleteBook(id){
   if(!confirm('この参考書を削除しますか？'))return;
@@ -2056,7 +2081,15 @@ function makeRowEl(row, isStudy){
     var subLbl = document.createElement('div');
     subLbl.style.cssText = 'font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     // 参考書名とは別に科目を表示（labelとsubjectが違う場合）
-    if(row.subject && row.label && row.subject !== row.label){
+    if(row.bookId){
+      var linkedBook = books.find(function(b){return b.id===row.bookId;});
+      if(linkedBook){
+        subLbl.textContent = '🔗 ' + (linkedBook.subject||'') + (linkedBook.subject?' ':'') + '（参考書と連動中）';
+        subLbl.style.color = 'var(--gold)';
+      } else {
+        subLbl.textContent = row.subject||'';
+      }
+    } else if(row.subject && row.label && row.subject !== row.label){
       subLbl.textContent = row.subject;
     } else if(!row.label || row.label === '勉強'){
       subLbl.textContent = '科目・参考書を選択してください';
@@ -2118,7 +2151,7 @@ function makeRowEl(row, isStudy){
   minWrap.className = 'sched-row-min';
   var minInp = document.createElement('input');
   minInp.type='number'; minInp.min=1; minInp.max=1440; minInp.value=row.min;
-  minInp.onchange=(function(r){return function(){r.min=Math.max(1,parseInt(this.value)||1);schedUpdate();schedAutoRedraw();};})(row);
+  minInp.onchange=(function(r){return function(){r.min=Math.max(1,parseInt(this.value)||1);syncSchedToBook(r);schedUpdate();schedAutoRedraw();};})(row);
   minWrap.appendChild(minInp);
 
   var unit = document.createElement('span');
@@ -2862,6 +2895,7 @@ function saveChartPop(isNew){
     }
     if(!row.fixed) row.startTime=newTime;
     row.min=newMin;
+    syncSchedToBook(row); // 参考書の dailyMin にも反映
 
     // 以降シフト：開始時刻変更 or 時間増加のとき
     if(doShift){
@@ -3323,6 +3357,7 @@ function renderGantt(){
         book.days=Math.max(1,Math.ceil((new Date(book.endDate)-new Date(book.startDate))/86400000)+1);
         book.computed=compute(book.q,book.rep,book.days);
         saveBooks();
+        syncBookDatesToSched(book.id);
         renderGantt();
         showToast(book.name+' の期間を更新しました ✓','ok');
       }
@@ -3648,6 +3683,7 @@ function saveGanttModal(){
   book.days = Math.ceil((new Date(e)-new Date(s))/86400000)+1;
   book.computed  = compute(book.q, book.rep, book.days);
   saveBooks();
+  syncBookDatesToSched(book.id);
   renderGantt();
   closeGanttModal();
   showToast(book.name+' の期間を更新しました ✓','ok');
@@ -3839,6 +3875,55 @@ function schedAutoRedraw(){
     }
   }, 300);
 }
+
+// ===================== RELATIONAL SYNC =====================
+
+// スケジュール行 → 参考書（min変更時）
+function syncSchedToBook(row){
+  if(!row.bookId) return;
+  var book = books.find(function(b){ return b.id === row.bookId; });
+  if(!book) return;
+  var newDailyMin = row.min;
+  if(book.dailyMin === newDailyMin) return; // 変更なし
+  book.dailyMin = newDailyMin;
+  // フェーズ再計算（問題数・反復回数・日数は変えない）
+  book.computed = compute(book.q, book.rep, book.days);
+  saveBooks();
+  // 一覧表示を更新（表示中なら）
+  var listPane = document.getElementById('pane-list');
+  if(listPane && !listPane.classList.contains('gone')) renderList();
+}
+
+// 参考書 → スケジュール行（dailyMin変更時）
+function syncBookToSched(bookId, newDailyMin){
+  var changed = false;
+  schedRows.forEach(function(r){
+    if(r.bookId === bookId && r.min !== newDailyMin){
+      r.min = newDailyMin;
+      changed = true;
+    }
+  });
+  if(changed){
+    saveSchedToStorage();
+    // スケジュールタブが表示中なら再描画
+    var schedPane = document.getElementById('pane-sched');
+    if(schedPane && !schedPane.classList.contains('gone')){
+      renderAllRows();
+      schedUpdate();
+      schedAutoRedraw();
+    }
+  }
+}
+
+// 参考書の期間変更（ガント等）→ フェーズ再計算 → スケジュール行も更新
+function syncBookDatesToSched(bookId){
+  var book = books.find(function(b){ return b.id === bookId; });
+  if(!book) return;
+  if(book.dailyMin){
+    syncBookToSched(bookId, book.dailyMin);
+  }
+}
+
 
 // ===================== SCHEDULE PERSISTENCE =====================
 function saveSchedToStorage(){
