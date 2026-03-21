@@ -209,8 +209,6 @@ body.gantt-active #pane-gantt{width:100%;}
 .bi-phase-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;
   color:var(--text);white-space:nowrap;text-align:right;}
 .bi-phase-val span{font-size:9px;color:var(--text3);margin-left:2px;}
-.bi-phase-min{font-size:10px;color:var(--gold);margin-top:2px;font-family:'DM Mono',monospace;}
-.bi-phase-min{font-size:9px;color:var(--gold);margin-top:2px;font-family:'DM Mono',monospace;}
 .bi-actions{display:flex;gap:8px;}
 .ba-btn{background:transparent;border:1px solid var(--border);border-radius:8px;
   padding:7px 14px;font-family:'Noto Sans JP',sans-serif;font-size:12px;
@@ -1477,9 +1475,9 @@ function showResult(b){
     timebar.style.display='flex';
     document.getElementById('tb-min').textContent=dm;
     document.getElementById('tb-avg').textContent=(dm/c.perDay).toFixed(1);
-    document.getElementById('p1mpq').innerHTML=dm>0?'→ 1題 <b>'+(dm/c.p1).toFixed(1)+'分</b> （'+dm+'分/日）':'';
+    document.getElementById('p1mpq').innerHTML=dm>0?'→ 1題 <b>'+(dm/c.p1).toFixed(1)+'分</b>':'';
     document.getElementById('p2mpq').innerHTML=dm>0?'→ 1題 <b>'+(dm/c.p2).toFixed(1)+'分</b>':'';
-    document.getElementById('p3mpq').innerHTML=dm>0?'→ 1題 <b>'+(dm/c.perDay).toFixed(1)+'分</b> （'+dm+'分/日）':'';
+    document.getElementById('p3mpq').innerHTML=dm>0?'→ 1題 <b>'+(dm/c.perDay).toFixed(1)+'分</b>':'';
   } else {
     timebar.style.display='none';
     document.getElementById('p1mpq').innerHTML='';
@@ -1562,25 +1560,25 @@ function renderList(){
               '<div class="bi-stat"><div class="bi-stat-l">反復回数</div><div class="bi-stat-v">'+b.rep+'<span>回</span></div></div>'+
               '<div class="bi-stat"><div class="bi-stat-l">総問題数</div><div class="bi-stat-v">'+c.total.toLocaleString()+'<span>問</span></div></div>'+
               '<div class="bi-stat"><div class="bi-stat-l">推定時間</div><div class="bi-stat-v">'+totalHr+'<span>h</span></div></div>'+
-              (b.dailyMin?'<div class="bi-stat" data-role="min-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+ 
+              (b.dailyMin?'<div class="bi-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+ 
             '</div>'+
           '</div>'+
-          '<div class="bi-phases" data-role="phases">'+
+          '<div class="bi-phases">'+
             '<div class="bi-phase-title">📈 フェーズ計画</div>'+
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">①</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">ウォームアップ期</div><div class="bi-phase-period">1日目 〜 '+c.p1End+'日目（'+c.p1End+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p1+'<span>題/日</span>'+(b.dailyMin?'<div class="bi-phase-min">'+(b.dailyMin/c.p1).toFixed(1)+'分/題</div>':'')+'</div>'+
+              '<div class="bi-phase-val">'+c.p1+'<span>題/日</span></div>'+
             '</div>'+
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">②</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">加速期</div><div class="bi-phase-period">'+(c.p1End+1)+'日目 〜 '+c.p2End+'日目（'+(c.p2End-c.p1End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p2+'<span>題/日</span>'+(b.dailyMin?'<div class="bi-phase-min">'+(b.dailyMin/c.p2).toFixed(1)+'分/題</div>':'')+'</div>'+
+              '<div class="bi-phase-val">'+c.p2+'<span>題/日</span></div>'+
             '</div>'+
             '<div class="bi-phase-row">'+
               '<div class="bi-phase-num">③</div>'+
               '<div class="bi-phase-info"><div class="bi-phase-name">完走期</div><div class="bi-phase-period">'+(c.p2End+1)+'日目 〜 '+b.days+'日目（'+(b.days-c.p2End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span>'+(b.dailyMin?'<div class="bi-phase-min">'+(b.dailyMin/c.perDay).toFixed(1)+'分/題</div>':'')+'</div>'+
+              '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span></div>'+
             '</div>'+
           '</div>'+
           '<div class="bi-actions">'+
@@ -2158,9 +2156,8 @@ function makeRowEl(row, isStudy){
     var _debounce=null;
     function applyMin(el){
       var v=Math.max(1,parseInt(el.value)||1);
-      if(r.min===v) return;
       r.min=v; el.value=v;
-      syncSchedToBook(r);
+      syncSchedToBook(r);  // early return なし：常に同期
       schedUpdate();
       schedAutoRedraw();
     }
@@ -2169,7 +2166,7 @@ function makeRowEl(row, isStudy){
     minInp.addEventListener('input',  function(){
       var self=this;
       clearTimeout(_debounce);
-      _debounce=setTimeout(function(){ applyMin(self); }, 600);
+      _debounce=setTimeout(function(){ applyMin(self); }, 400);
     });
   })(row);
   minWrap.appendChild(minInp);
@@ -3904,13 +3901,12 @@ function syncSchedToBook(row){
   var book = books.find(function(b){ return b.id === row.bookId; });
   if(!book) return;
   var newDailyMin = row.min;
-  if(book.dailyMin === newDailyMin) return;
+  // early return なし：必ず更新してDOMに反映
   book.dailyMin = newDailyMin;
   book.computed = compute(book.q, book.rep, book.days);
   saveBooks();
-  // 一覧カードを直接更新（タブ表示状態に関係なく）
   renderBookItemById(book.id);
-  showToast(book.name + ' の学習時間を ' + newDailyMin + '分/日 に更新しました', 'ok');
+  showToast(book.name + ' → ' + newDailyMin + '分/日', 'ok');
 }
 
 // 指定した参考書カードのDOMを差し替え（data-book-id で特定）
@@ -3918,72 +3914,68 @@ function renderBookItemById(bookId){
   var book = books.find(function(b){ return b.id === bookId; });
   if(!book) return;
   var c = book.computed;
+  var dm = book.dailyMin || 0;
 
-  // data-book-id 属性で直接特定
   var card = document.querySelector('.book-item[data-book-id="' + bookId + '"]');
-  if(!card){
-    // 一覧タブが未描画なら次回open時にrenderListで反映されるのでOK
-    return;
-  }
+  if(!card) return; // 一覧タブ未描画時は次回renderListで反映
 
-  // ① ヒーロー数字（1日ノルマ 題/日）
+  // ① ヒーロー
   var heroNum = card.querySelector('.bi-hero-num');
   if(heroNum) heroNum.textContent = c.perDay;
 
-  // ② 1日N分 → 1題あたり スタット
+  // ② 分/題 スタット（data-role で特定、なければ生成）
   var statGrid = card.querySelector('.bi-stats-grid');
   if(statGrid){
-    var minStat = card.querySelector('[data-role="min-stat"]');
-    if(book.dailyMin && book.dailyMin > 0){
+    var minStat = statGrid.querySelector('[data-role="min-stat"]');
+    if(dm > 0){
       if(!minStat){
         minStat = document.createElement('div');
         minStat.className = 'bi-stat';
-        minStat.setAttribute('data-role', 'min-stat');
+        minStat.setAttribute('data-role','min-stat');
         statGrid.appendChild(minStat);
       }
-      minStat.style.cssText = 'grid-column:span 2;background:#1a1a00;border-color:#3a3000;';
-      minStat.innerHTML =
-        '<div class="bi-stat-l">1日' + book.dailyMin + '分 → 1題あたり</div>' +
-        '<div class="bi-stat-v" style="color:var(--gold)">' +
-          '① ' + (book.dailyMin / c.p1).toFixed(1) + '分　' +
-          '② ' + (book.dailyMin / c.p2).toFixed(1) + '分　' +
-          '③ ' + (book.dailyMin / c.perDay).toFixed(1) + '分' +
+      minStat.style.cssText='grid-column:span 2;background:#1a1a00;border-color:#3a3000;';
+      minStat.innerHTML=
+        '<div class="bi-stat-l">1日'+dm+'分 → 1題あたり</div>'+
+        '<div class="bi-stat-v" style="color:var(--gold)">'+
+          '① '+(dm/c.p1).toFixed(1)+'分　'+
+          '② '+(dm/c.p2).toFixed(1)+'分　'+
+          '③ '+(dm/c.perDay).toFixed(1)+'分'+
         '</div>';
     } else if(minStat){
       minStat.remove();
     }
   }
 
-  // ③ フェーズ計画（分/題も更新）
-  var phases = card.querySelector('[data-role="phases"]') || card.querySelector('.bi-phases');
+  // ③ フェーズ計画（分/題も表示）
+  var phases = card.querySelector('.bi-phases');
   if(phases){
-    var dm = book.dailyMin || 0;
-    function minPerQ(n){ return dm ? '<div class="bi-phase-min">'+(dm/n).toFixed(1)+'分/題</div>' : ''; }
-    phases.innerHTML =
-      '<div class="bi-phase-title">📈 フェーズ計画</div>' +
-      '<div class="bi-phase-row">' +
-        '<div class="bi-phase-num">①</div>' +
-        '<div class="bi-phase-info">' +
-          '<div class="bi-phase-name">ウォームアップ期</div>' +
-          '<div class="bi-phase-period">1日目 〜 ' + c.p1End + '日目（' + c.p1End + '日間）</div>' +
-        '</div>' +
-        '<div class="bi-phase-val">' + c.p1 + '<span>題/日</span>' + minPerQ(c.p1) + '</div>' +
-      '</div>' +
-      '<div class="bi-phase-row">' +
-        '<div class="bi-phase-num">②</div>' +
-        '<div class="bi-phase-info">' +
-          '<div class="bi-phase-name">加速期</div>' +
-          '<div class="bi-phase-period">' + (c.p1End+1) + '日目 〜 ' + c.p2End + '日目（' + (c.p2End-c.p1End) + '日間）</div>' +
-        '</div>' +
-        '<div class="bi-phase-val">' + c.p2 + '<span>題/日</span>' + minPerQ(c.p2) + '</div>' +
-      '</div>' +
-      '<div class="bi-phase-row">' +
-        '<div class="bi-phase-num">③</div>' +
-        '<div class="bi-phase-info">' +
-          '<div class="bi-phase-name">完走期</div>' +
-          '<div class="bi-phase-period">' + (c.p2End+1) + '日目 〜 ' + book.days + '日目（' + (book.days-c.p2End) + '日間）</div>' +
-        '</div>' +
-        '<div class="bi-phase-val">' + c.perDay + '<span>題/日</span>' + minPerQ(c.perDay) + '</div>' +
+    function mpq(n){ return dm>0?'<small style="color:var(--gold);font-family:DM Mono,monospace;display:block;font-size:9px">'+(dm/n).toFixed(1)+'分/題</small>':''; }
+    phases.innerHTML=
+      '<div class="bi-phase-title">📈 フェーズ計画</div>'+
+      '<div class="bi-phase-row">'+
+        '<div class="bi-phase-num">①</div>'+
+        '<div class="bi-phase-info">'+
+          '<div class="bi-phase-name">ウォームアップ期</div>'+
+          '<div class="bi-phase-period">1日目 〜 '+c.p1End+'日目（'+c.p1End+'日間）</div>'+
+        '</div>'+
+        '<div class="bi-phase-val">'+c.p1+'<span>題/日</span>'+mpq(c.p1)+'</div>'+
+      '</div>'+
+      '<div class="bi-phase-row">'+
+        '<div class="bi-phase-num">②</div>'+
+        '<div class="bi-phase-info">'+
+          '<div class="bi-phase-name">加速期</div>'+
+          '<div class="bi-phase-period">'+(c.p1End+1)+'日目 〜 '+c.p2End+'日目（'+(c.p2End-c.p1End)+'日間）</div>'+
+        '</div>'+
+        '<div class="bi-phase-val">'+c.p2+'<span>題/日</span>'+mpq(c.p2)+'</div>'+
+      '</div>'+
+      '<div class="bi-phase-row">'+
+        '<div class="bi-phase-num">③</div>'+
+        '<div class="bi-phase-info">'+
+          '<div class="bi-phase-name">完走期</div>'+
+          '<div class="bi-phase-period">'+(c.p2End+1)+'日目 〜 '+book.days+'日目（'+(book.days-c.p2End)+'日間）</div>'+
+        '</div>'+
+        '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span>'+mpq(c.perDay)+'</div>'+
       '</div>';
   }
 }
