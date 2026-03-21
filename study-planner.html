@@ -2163,10 +2163,15 @@ function makeRowEl(row, isStudy){
     }
     minInp.addEventListener('change', function(){ applyMin(this); });
     minInp.addEventListener('blur',   function(){ applyMin(this); });
-    minInp.addEventListener('input',  function(){
-      var self=this;
-      clearTimeout(_debounce);
-      _debounce=setTimeout(function(){ applyMin(self); }, 400);
+    minInp.addEventListener('input', function(){
+      var v = parseInt(this.value);
+      if(!isNaN(v) && v >= 1){
+        clearTimeout(_debounce);
+        var self = this;
+        _debounce = setTimeout(function(){ applyMin(self); }, 600);
+      } else {
+        clearTimeout(_debounce);
+      }
     });
   })(row);
   minWrap.appendChild(minInp);
