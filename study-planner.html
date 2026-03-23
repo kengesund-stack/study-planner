@@ -2519,7 +2519,11 @@ function _schedDraw(){
   sorted.forEach(function(r,i){
     if(!r.startTime||r.min<=0) return;
     var label = r.cat==='勉強'?(r.subject||'勉強'):r.label;
-    segs.push({label:label, startMin:timeToMin(r.startTime), min:r.min, cat:r.cat, row:r, colorIdx:i});
+    // bookId あり = 参考書と連動 → bookLabel に参考書名をセット
+    var bookLabel = (r.cat==='勉強' && r.bookId && r.label) ? r.label : null;
+    // label（科目名）と同じなら参考書名を優先表示しても意味がないのでnull
+    if(bookLabel && bookLabel === label) bookLabel = null;
+    segs.push({label:label, bookLabel:bookLabel, startMin:timeToMin(r.startTime), min:r.min, cat:r.cat, row:r, colorIdx:i});
   });
 
   // SVG作成
@@ -2684,18 +2688,15 @@ function _schedDraw(){
     // メイン行：時刻 + 参考書名（or ラベル）+ 時間
     var mainLine=document.createElement('span');
     var timeStr=(seg.row&&seg.row.startTime)?seg.row.startTime+' ':'';
-    // 勉強行の場合：参考書名（row.label）を優先して表示
-    var displayName = seg.label; // デフォルトは科目名
-    if(seg.row && seg.row.cat==='勉強' && seg.row.label && seg.row.label !== seg.row.subject){
-      displayName = seg.row.label; // 参考書名
-    }
+    // 勉強行の場合：参考書名を優先して表示（seg.bookLabel に保存済み）
+    var displayName = seg.bookLabel || seg.label;
     mainLine.textContent = timeStr + displayName + ' ' + minToHM(seg.min);
     mainLine.style.cssText='font-size:11px;color:var(--text2);';
 
     // サブ行：参考書名がある場合は科目名を小さく表示
-    if(seg.row && seg.row.cat==='勉強' && seg.row.label && seg.row.label !== seg.row.subject && seg.row.subject){
+    if(seg.bookLabel && seg.label && seg.bookLabel !== seg.label){
       var subLine=document.createElement('span');
-      subLine.textContent=seg.row.subject;
+      subLine.textContent=seg.label; // 科目名をサブに
       subLine.style.cssText='font-size:9px;color:var(--text3);font-family:"DM Mono",monospace;';
       textWrap.appendChild(mainLine);
       textWrap.appendChild(subLine);
@@ -3018,10 +3019,9 @@ function printSchedule(){
     var endTime=s.startMin!==undefined?minToTime(s.startMin+s.min):'—';
     var bg=i%2===0?'':'background:#f5f5f5;';
     // 参考書名を優先表示
-    var dispName=s.label;
-    if(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject) dispName=s.row.label;
-    var subNameHtml=(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject&&s.row.subject)?
-      '<span class="ps-cat">'+s.row.subject+'</span>':'';
+    var dispName=s.bookLabel||s.label;
+    var subNameHtml=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
+      '<span class="ps-cat">'+s.label+'</span>':'';
     rows+='<tr style="'+bg+'">'+
       '<td style="font-family:monospace;text-align:center;">'+minToTime(s.startMin)+'</td>'+
       '<td style="font-family:monospace;text-align:center;">'+endTime+'</td>'+
@@ -3042,10 +3042,9 @@ function printSchedule(){
     var col=getColor(s.row,i);
     var timeStr=s.startMin!==undefined?minToTime(s.startMin)+' ':'';
     // 参考書名を優先表示
-    var dispName=s.label;
-    if(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject) dispName=s.row.label;
-    var subName=(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject&&s.row.subject)?
-      '<span style="font-size:6.5pt;color:#777;display:block;">'+s.row.subject+'</span>':'';
+    var dispName=s.bookLabel||s.label;
+    var subName=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
+      '<span style="font-size:6.5pt;color:#777;display:block;">'+s.label+'</span>':'';
     legendHTML+='<div class="ps-legend-item">'+
       '<div class="ps-legend-dot" style="background:'+col+';margin-top:2pt;"></div>'+
       '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div></div>';
