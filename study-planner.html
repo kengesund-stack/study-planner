@@ -468,15 +468,15 @@ body.gantt-active #pane-gantt{width:100%;}
   .ps-wrap{page:landscape;}
   /* ページ1: グラフ＋凡例（横向き・1ページに収める） */
   .ps-page1{page:landscape;break-after:page;page-break-after:always;}
-  .ps-chart-area{display:flex;gap:16pt;align-items:flex-start;}
+  .ps-chart-area{display:flex;gap:20pt;align-items:flex-start;}
   .ps-chart-box{text-align:center;flex-shrink:0;}
   .ps-legend{margin-top:0;}
   /* 凡例: 縦1列→溢れたら横展開（A4横の高さに合わせてmax-height設定） */
   .ps-legend-grid{display:flex;flex-direction:column;flex-wrap:wrap;
-    max-height:430pt;gap:4pt 16pt;align-content:flex-start;}
-  .ps-legend-item{display:flex;align-items:flex-start;gap:6pt;font-size:10pt;
-    break-inside:avoid;page-break-inside:avoid;line-height:1.35;white-space:nowrap;}
-  .ps-legend-dot{width:10pt;height:10pt;border-radius:2pt;flex-shrink:0;margin-top:1.5pt;}
+    max-height:190pt;gap:4pt 18pt;align-content:flex-start;}
+  .ps-legend-item{display:flex;align-items:flex-start;gap:7pt;font-size:10pt;
+    break-inside:avoid;page-break-inside:avoid;line-height:1.4;}
+  .ps-legend-dot{width:11pt;height:11pt;border-radius:2pt;flex-shrink:0;margin-top:2pt;}
   /* ページ2以降: 表（横向き） */
   .ps-page2{page:landscape;break-before:page;page-break-before:always;}
   .ps-table{width:100%;border-collapse:collapse;font-size:9pt;}
@@ -3100,47 +3100,16 @@ function printSchedule(){
   var svgDataUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);
 
   // ---- 凡例（縦1列→溢れたら横展開）----
-  // A4横 印刷可能エリア: 幅757pt(267mm)、高さ510pt(180mm)
-  // ヘッダー35pt + グラフ幅200pt + gap16pt → 凡例エリア幅 = 757-200-16-余白30 = 511pt
-  // 凡例エリア高さ = 510 - 35(ヘッダー) = 475pt → max-height:430pt(自由時間テキスト等考慮)
-  var LEGEND_H = 430;   // pt: 凡例グリッドのmax-height
-  var LEGEND_W = 500;   // pt: 凡例エリアの利用可能幅(概算)
-  var n = segs.length;
-
-  // アイテム数からフォントサイズを逆算
-  // 1列に入る行数 = floor(LEGEND_H / (fontSize*1.35 + 4))
-  // 必要列数 = ceil(n / 行数per列)
-  // 列幅 = LEGEND_W / 列数 → 1列の最大文字数を確認
-  var bestF = 10;
-  for(var F = 13; F >= 8; F -= 0.5) {
-    var rowH = F * 1.35 + 4;          // 行高さ + gap
-    var rowsPerCol = Math.floor(LEGEND_H / rowH);
-    if(rowsPerCol < 1) continue;
-    var cols = Math.ceil(n / rowsPerCol);
-    var colW = LEGEND_W / cols;
-    // 1列の幅が最低80ptあれば採用
-    if(colW >= 80) {
-      bestF = F;
-      break;
-    }
-  }
-  var dotSz = Math.max(8, Math.round(bestF * 0.95));
-  var subF  = Math.max(7, bestF - 1.5);
-  var itemGap = Math.max(5, bestF * 0.55);
-
   var legendHTML='';
   segs.forEach(function(s,i){
     var col=getColor(s.row,i);
     var timeStr=s.startMin!==undefined?minToTime(s.startMin)+' ':'';
     var dispName=s.bookLabel||s.label;
     var subName=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
-      '<span style="font-size:'+subF+'pt;color:#555;display:block;margin-top:1pt;">'+s.label+'</span>':'';
-    legendHTML+=
-      '<div class="ps-legend-item" style="font-size:'+bestF+'pt;gap:'+itemGap+'pt;">'+
-        '<div class="ps-legend-dot" style="background:'+col+
-          ';width:'+dotSz+'pt;height:'+dotSz+'pt;margin-top:'+Math.max(1,bestF*0.12)+'pt;"></div>'+
-        '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div>'+
-      '</div>';
+      '<span style="font-size:8.5pt;color:#666;display:block;">'+s.label+'</span>':'';
+    legendHTML+='<div class="ps-legend-item">'+
+      '<div class="ps-legend-dot" style="background:'+col+'"></div>'+
+      '<div><span>'+timeStr+dispName+' '+s.min+'分</span>'+subName+'</div></div>';
   });
 
   var freeDisp=window._schedFree>0?minToHM(window._schedFree):'0分';
@@ -3154,11 +3123,11 @@ function printSchedule(){
       '</div>'+
       '<div class="ps-chart-area">'+
         '<div class="ps-chart-box">'+
-          '<img src="'+svgDataUrl+'" style="width:200pt;height:200pt;">'+
-          '<div style="margin-top:6pt;font-size:'+bestF+'pt;">自由時間: <b>'+freeDisp+'</b></div>'+
+          '<img src="'+svgDataUrl+'" style="width:230pt;height:230pt;">'+
+          '<div style="margin-top:8pt;font-size:10pt;">自由時間: <b>'+freeDisp+'</b></div>'+
         '</div>'+
         '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:'+(bestF+1)+'pt;font-weight:700;margin-bottom:6pt;border-bottom:1pt solid #bbb;padding-bottom:3pt;">凡例</div>'+
+          '<div style="font-size:11pt;font-weight:700;margin-bottom:8pt;border-bottom:1.5pt solid #bbb;padding-bottom:4pt;">凡例</div>'+
           '<div class="ps-legend-grid">'+legendHTML+'</div>'+
         '</div>'+
       '</div>'+
