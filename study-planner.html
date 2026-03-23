@@ -468,15 +468,15 @@ body.gantt-active #pane-gantt{width:100%;}
   .ps-wrap{page:landscape;}
   /* ページ1: グラフ＋凡例（横向き・1ページに収める） */
   .ps-page1{page:landscape;break-after:page;page-break-after:always;}
-  .ps-chart-area{display:flex;gap:20pt;align-items:flex-start;}
+  .ps-chart-area{display:flex;gap:16pt;align-items:flex-start;}
   .ps-chart-box{text-align:center;flex-shrink:0;}
   .ps-legend{margin-top:0;}
-  /* 凡例: 縦1列→溢れたら横展開。max-height/font-sizeはJS側で動的設定 */
+  /* 凡例: 縦1列→溢れたら横展開（A4横の高さに合わせてmax-height設定） */
   .ps-legend-grid{display:flex;flex-direction:column;flex-wrap:wrap;
-    gap:3pt 12pt;align-content:flex-start;}
-  .ps-legend-item{display:flex;align-items:flex-start;
-    break-inside:avoid;page-break-inside:avoid;line-height:1.3;white-space:nowrap;}
-  .ps-legend-dot{border-radius:2pt;flex-shrink:0;}
+    max-height:430pt;gap:4pt 16pt;align-content:flex-start;}
+  .ps-legend-item{display:flex;align-items:flex-start;gap:6pt;font-size:10pt;
+    break-inside:avoid;page-break-inside:avoid;line-height:1.35;white-space:nowrap;}
+  .ps-legend-dot{width:10pt;height:10pt;border-radius:2pt;flex-shrink:0;margin-top:1.5pt;}
   /* ページ2以降: 表（横向き） */
   .ps-page2{page:landscape;break-before:page;page-break-before:always;}
   .ps-table{width:100%;border-collapse:collapse;font-size:9pt;}
@@ -3099,32 +3099,34 @@ function printSchedule(){
   var svgStr=new XMLSerializer().serializeToString(svgEl);
   var svgDataUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);
 
-  // ---- 凡例（動的フォントサイズ + 全幅活用）----
-  // A4横 印刷可能エリア: 幅785pt(マージン20mm×2で277mm)、高さ510pt(180mm)
-  // グラフ幅240pt + gap14pt → 凡例幅 = 785-240-14-余白4 = 527pt
-  // ヘッダー48pt → 凡例高さ = 510-48 = 462pt
-  var CHART_PT = 240;    // グラフ表示サイズ(pt)
-  var LEGEND_H = 430;   // 凡例グリッドのmax-height(pt)
-  var LEGEND_W = 510;   // 凡例エリア幅(pt)
+  // ---- 凡例（縦1列→溢れたら横展開）----
+  // A4横 印刷可能エリア: 幅757pt(267mm)、高さ510pt(180mm)
+  // ヘッダー35pt + グラフ幅200pt + gap16pt → 凡例エリア幅 = 757-200-16-余白30 = 511pt
+  // 凡例エリア高さ = 510 - 35(ヘッダー) = 475pt → max-height:430pt(自由時間テキスト等考慮)
+  var LEGEND_H = 430;   // pt: 凡例グリッドのmax-height
+  var LEGEND_W = 500;   // pt: 凡例エリアの利用可能幅(概算)
   var n = segs.length;
 
-  // フォントサイズを逆算: 8〜14ptの範囲で最大値を選択
-  // 行高さ = fontSize * 1.3 + 3pt(gap)
-  // 1列の行数 = floor(LEGEND_H / 行高さ)
-  // 必要列数 = ceil(n / 1列の行数)
-  // 列幅 = LEGEND_W / 列数 → 最低90pt
-  var bestF = 9;
-  for(var F = 14; F >= 8; F -= 0.5) {
-    var rowH = F * 1.3 + 3;
-    var rowsPerCol = Math.max(1, Math.floor(LEGEND_H / rowH));
+  // アイテム数からフォントサイズを逆算
+  // 1列に入る行数 = floor(LEGEND_H / (fontSize*1.35 + 4))
+  // 必要列数 = ceil(n / 行数per列)
+  // 列幅 = LEGEND_W / 列数 → 1列の最大文字数を確認
+  var bestF = 10;
+  for(var F = 13; F >= 8; F -= 0.5) {
+    var rowH = F * 1.35 + 4;          // 行高さ + gap
+    var rowsPerCol = Math.floor(LEGEND_H / rowH);
+    if(rowsPerCol < 1) continue;
     var cols = Math.ceil(n / rowsPerCol);
     var colW = LEGEND_W / cols;
-    if(colW >= 90) { bestF = F; break; }
+    // 1列の幅が最低80ptあれば採用
+    if(colW >= 80) {
+      bestF = F;
+      break;
+    }
   }
-  var dotSz  = Math.round(Math.max(7, bestF * 0.9));
-  var subF   = Math.max(6.5, bestF - 1.5);
-  var itemGap = Math.max(4, Math.round(bestF * 0.5));
-  var legendGridStyle = 'max-height:'+LEGEND_H+'pt;';
+  var dotSz = Math.max(8, Math.round(bestF * 0.95));
+  var subF  = Math.max(7, bestF - 1.5);
+  var itemGap = Math.max(5, bestF * 0.55);
 
   var legendHTML='';
   segs.forEach(function(s,i){
@@ -3132,12 +3134,12 @@ function printSchedule(){
     var timeStr=s.startMin!==undefined?minToTime(s.startMin)+' ':'';
     var dispName=s.bookLabel||s.label;
     var subName=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
-      '<span style="font-size:'+subF+'pt;color:#666;display:block;margin-top:1pt;">'+s.label+'</span>':'';
+      '<span style="font-size:'+subF+'pt;color:#555;display:block;margin-top:1pt;">'+s.label+'</span>':'';
     legendHTML+=
       '<div class="ps-legend-item" style="font-size:'+bestF+'pt;gap:'+itemGap+'pt;">'+
         '<div class="ps-legend-dot" style="background:'+col+
-          ';width:'+dotSz+'pt;height:'+dotSz+'pt;margin-top:'+Math.max(1,bestF*0.1)+'pt;"></div>'+
-        '<div><span>'+timeStr+dispName+' '+s.min+'分</span>'+subName+'</div>'+
+          ';width:'+dotSz+'pt;height:'+dotSz+'pt;margin-top:'+Math.max(1,bestF*0.12)+'pt;"></div>'+
+        '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div>'+
       '</div>';
   });
 
@@ -3150,14 +3152,14 @@ function printSchedule(){
         '<div class="ps-hd-title">1日スケジュール</div>'+
         '<div class="ps-hd-date">出力日: '+today()+'　起床 '+window._schedWake+' 〜 就寝 '+window._schedSleep+'　（活動 '+minToHM(window._schedAwake)+'）</div>'+
       '</div>'+
-      '<div class="ps-chart-area" style="gap:14pt;">'+
+      '<div class="ps-chart-area">'+
         '<div class="ps-chart-box">'+
-          '<img src="'+svgDataUrl+'" style="width:'+CHART_PT+'pt;height:'+CHART_PT+'pt;">'+
+          '<img src="'+svgDataUrl+'" style="width:200pt;height:200pt;">'+
           '<div style="margin-top:6pt;font-size:'+bestF+'pt;">自由時間: <b>'+freeDisp+'</b></div>'+
         '</div>'+
-        '<div style="flex:1;min-width:0;overflow:hidden;">'+
-          '<div style="font-size:'+(Math.round(bestF)+1)+'pt;font-weight:700;margin-bottom:5pt;border-bottom:1.5pt solid #bbb;padding-bottom:3pt;">凡例</div>'+
-          '<div class="ps-legend-grid" style="'+legendGridStyle+'">'+legendHTML+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:'+(bestF+1)+'pt;font-weight:700;margin-bottom:6pt;border-bottom:1pt solid #bbb;padding-bottom:3pt;">凡例</div>'+
+          '<div class="ps-legend-grid">'+legendHTML+'</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
