@@ -459,63 +459,31 @@ body.gantt-active #pane-gantt{width:100%;}
 .sched-col-hd span{font-family:"DM Mono",monospace;font-size:8px;color:var(--text3);
   letter-spacing:.1em;text-transform:uppercase;}
 @media print{
-  /* A4横 大フォント版 */
-  .ps-wrap{font-family:"Noto Sans JP",sans-serif;font-size:12pt;page:landscape;}
-  .ps-hd{display:flex;align-items:baseline;justify-content:space-between;
-    padding-bottom:12pt;border-bottom:2.5pt solid #000;margin-bottom:18pt;}
-  .ps-hd-title{font-size:22pt;font-weight:900;}
-  .ps-hd-date{font-family:"DM Mono",monospace;font-size:11pt;color:#444;}
-  /* ページ1（横向き）: グラフ＋凡例 */
-  .ps-page1{page:landscape;break-after:page;page-break-after:always;}
-  .ps-chart-area{display:flex;gap:28pt;align-items:flex-start;}
+  .ps-wrap{font-family:"Noto Sans JP",sans-serif;}
+  .ps-hd{display:flex;align-items:center;justify-content:space-between;
+    padding-bottom:10px;border-bottom:2px solid #000;margin-bottom:16px;}
+  .ps-hd-title{font-size:18pt;font-weight:900;}
+  .ps-hd-date{font-family:"DM Mono",monospace;font-size:9pt;color:#555;}
+  /* ページ1: グラフ＋凡例 縦並び */
+  .ps-page1{break-after:page;page-break-after:always;}
+  .ps-chart-area{display:flex;gap:20pt;align-items:flex-start;}
   .ps-chart-box{text-align:center;flex-shrink:0;}
-  /* 凡例: 縦並び→溢れたら横展開 */
-  .ps-legend-grid{display:flex;flex-direction:column;flex-wrap:wrap;
-    max-height:220pt;gap:5pt 24pt;align-content:flex-start;}
-  .ps-legend-item{display:flex;align-items:flex-start;gap:9pt;font-size:11pt;
-    break-inside:avoid;page-break-inside:avoid;line-height:1.5;}
-  .ps-legend-dot{width:13pt;height:13pt;border-radius:3pt;flex-shrink:0;margin-top:2pt;}
-  /* ページ2（横向き）: スケジュール詳細表 */
-  .ps-page2{page:landscape;break-before:page;page-break-before:always;}
-  .ps-table{width:100%;border-collapse:collapse;font-size:12pt;}
-  .ps-table th{background:#e0e0e0;font-size:11pt;letter-spacing:.03em;
-    padding:8pt 10pt;border:1.5pt solid #555;text-align:left;font-weight:700;}
-  .ps-table td{padding:8pt 10pt;border:1pt solid #999;vertical-align:middle;line-height:1.6;}
+  .ps-legend{margin-top:0;}
+  .ps-legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:3pt 12pt;}
+  .ps-legend-item{display:flex;align-items:flex-start;gap:5pt;font-size:8pt;
+    margin-bottom:3pt;break-inside:avoid;page-break-inside:avoid;}
+  .ps-legend-dot{width:9pt;height:9pt;border-radius:2pt;flex-shrink:0;margin-top:1pt;}
+  /* ページ2: 表 */
+  .ps-page2{break-before:page;page-break-before:always;}
+  .ps-table{width:100%;border-collapse:collapse;font-size:8.5pt;}
+  .ps-table th{background:#e0e0e0;font-size:7.5pt;padding:5pt 6pt;
+    border:1.5pt solid #555;text-align:left;font-weight:700;}
+  .ps-table td{padding:5pt 6pt;border:1pt solid #999;vertical-align:middle;line-height:1.5;}
   .ps-table tr{break-inside:avoid;page-break-inside:avoid;}
   .ps-table tr:nth-child(even) td{background:#f5f5f5;}
-  .ps-cat{font-size:10pt;color:#555;display:block;margin-bottom:2pt;}
-  .ps-total-row td{background:#ddd!important;font-weight:700;
-    border-top:2.5pt solid #333;font-size:12pt;}
+  .ps-cat{font-size:7pt;color:#555;display:block;}
+  .ps-total-row td{background:#ddd!important;font-weight:700;border-top:2pt solid #333;}
   .ps-avail{font-weight:700;}
-  /* ページ3（横向き）: 参考書一覧 */
-  .ps-page3{page:landscape;break-before:page;page-break-before:always;}
-  .ps-books-grid{display:flex;flex-direction:column;gap:14pt;}
-  .ps-book-card{border:1.5pt solid #ccc;border-radius:8pt;padding:12pt 14pt;
-    break-inside:avoid;page-break-inside:avoid;}
-  .ps-book-name{font-size:14pt;font-weight:900;margin-bottom:4pt;color:#000;}
-  .ps-book-subject{font-size:10pt;color:#555;margin-bottom:8pt;}
-  .ps-book-dates{font-family:"DM Mono",monospace;font-size:11pt;color:#333;margin-bottom:10pt;}
-  .ps-book-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8pt;margin-bottom:10pt;}
-  .ps-book-stat{background:#f5f5f5;border-radius:5pt;padding:6pt 8pt;text-align:center;}
-  .ps-book-stat-lbl{font-size:9pt;color:#666;display:block;margin-bottom:2pt;}
-  .ps-book-stat-val{font-size:13pt;font-weight:700;color:#000;font-family:"DM Mono",monospace;}
-  .ps-book-stat-val span{font-size:10pt;color:#555;}
-  .ps-book-hero{background:#f0f0f0;border:2pt solid #333;border-radius:7pt;
-    padding:8pt 12pt;text-align:center;margin-bottom:10pt;}
-  .ps-book-hero-lbl{font-size:10pt;color:#555;margin-bottom:4pt;}
-  .ps-book-hero-num{font-size:28pt;font-weight:900;color:#000;font-family:"DM Mono",monospace;line-height:1;}
-  .ps-book-hero-unit{font-size:12pt;color:#333;}
-  .ps-book-phases{border:1pt solid #ccc;border-radius:5pt;overflow:hidden;}
-  .ps-book-phase-hd{background:#e8e8e8;font-size:11pt;font-weight:700;
-    padding:6pt 10pt;border-bottom:1pt solid #ccc;}
-  .ps-book-phase-row{display:flex;align-items:center;gap:10pt;
-    padding:7pt 10pt;border-bottom:1pt solid #eee;font-size:11pt;}
-  .ps-book-phase-row:last-child{border-bottom:none;}
-  .ps-book-phase-num{font-weight:900;color:#555;width:20pt;flex-shrink:0;}
-  .ps-book-phase-info{flex:1;}
-  .ps-book-phase-period{font-size:9pt;color:#777;font-family:"DM Mono",monospace;}
-  .ps-book-phase-val{font-family:"DM Mono",monospace;font-size:13pt;font-weight:700;text-align:right;}
-  .ps-book-phase-mpq{font-size:9pt;color:#555;text-align:right;font-family:"DM Mono",monospace;}
 }
 
 /* ===================== GANTT ===================== */
@@ -1330,7 +1298,7 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   <div id="po-single"></div>
 
   <!-- All books print content -->
-  <div id="po-all" class="landscape-page" style="font-size:11pt;">
+  <div id="po-all" class="landscape-page">
     <div class="pa-hd">
       <div class="pa-hd-title">反復学習<span>プランナー</span> — 参考書一覧</div>
       <div class="pa-hd-date" id="pa-date"></div>
@@ -1785,16 +1753,15 @@ function makeBookRow(b, isFirstInGroup){
     '<td><span class="pa-n">'+b.q+'</span><span class="pa-u">題</span></td>'+
     '<td><span class="pa-n">'+b.rep+'</span><span class="pa-u">回</span></td>'+
     '<td><span class="pa-n">'+c.total.toLocaleString()+'</span><span class="pa-u">問</span></td>'+
-    '<td><span class="pa-n">'+totalHr+'</span><span class="pa-u">時間</span>'+
-      (b.dailyMin?'<span class="pa-u" style="font-size:8pt;color:#777;">（'+Math.ceil(c.total*2/b.dailyMin)+'日分）</span>':'')+'</td>'+
+    '<td><span class="pa-n">'+totalHr+'</span><span class="pa-u">時間</span></td>'+
     '<td><span class="pa-hl">'+c.perDay+'</span><span class="pa-u">題/日</span></td>'+
     '<td>'+(b.dailyMin?'<div class="pa-ph"><b>'+(b.dailyMin/c.p1).toFixed(1)+'</b>分 / <b>'+(b.dailyMin/c.p2).toFixed(1)+'</b>分 / <b>'+(b.dailyMin/c.perDay).toFixed(1)+'</b>分</div>':'<span>—</span>')+'</td>'+
     '<td><div class="pa-ph">'+
-      '① ウォームアップ期　<b>'+c.p1+'題/日</b>　1〜'+c.p1End+'日目（'+c.p1End+'日）'+(b.dailyMin?'　<b>'+(b.dailyMin/c.p1).toFixed(1)+'分/題</b>':'')+
+      '① <b>'+c.p1+'題</b>/日　1〜'+c.p1End+'日目（'+c.p1End+'日）'+
       '<div class="pa-bar-w"><div class="pa-bar" style="width:'+p1pct+'%"></div></div>'+
-      '② 加速期　<b>'+c.p2+'題/日</b>　'+(c.p1End+1)+'〜'+c.p2End+'日目（'+(c.p2End-c.p1End)+'日）'+(b.dailyMin?'　<b>'+(b.dailyMin/c.p2).toFixed(1)+'分/題</b>':'')+
+      '② <b>'+c.p2+'題</b>/日　'+(c.p1End+1)+'〜'+c.p2End+'日目（'+(c.p2End-c.p1End)+'日）'+
       '<div class="pa-bar-w"><div class="pa-bar" style="width:'+p2pct+'%"></div></div>'+
-      '③ 完走期　<b>'+c.perDay+'題/日</b>　'+(c.p2End+1)+'〜'+b.days+'日目（'+(b.days-c.p2End)+'日）'+(b.dailyMin?'　<b>'+(b.dailyMin/c.perDay).toFixed(1)+'分/題</b>':'')+
+      '③ <b>'+c.perDay+'題</b>/日　'+(c.p2End+1)+'〜'+b.days+'日目（'+(b.days-c.p2End)+'日）'+
       '<div class="pa-bar-w"><div class="pa-bar" style="width:100%"></div></div>'+
     '</div></td>';
   return tr;
@@ -3056,17 +3023,44 @@ function printSchedule(){
     var pct=(s.min/1440*100).toFixed(1);
     var endTime=s.startMin!==undefined?minToTime(s.startMin+s.min):'—';
     var bg=i%2===0?'':'background:#f5f5f5;';
-    // 参考書名を優先表示
     var dispName=s.bookLabel||s.label;
     var subNameHtml=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
       '<span class="ps-cat">'+s.label+'</span>':'';
+
+    // 参考書と連動している勉強行なら詳細を取得
+    var bookDetailCells='<td colspan="6" style="color:#bbb;font-size:9pt;">—</td>';
+    if(s.row && s.row.bookId){
+      var bk=books.find(function(b){return b.id===s.row.bookId;});
+      if(bk){
+        var c=bk.computed;
+        var totalHr=Math.round(c.total*2/60);
+        var p1pct=Math.round(c.p1/c.perDay*100);
+        var p2pct=Math.round(c.p2/c.perDay*100);
+        bookDetailCells=
+          '<td style="text-align:center;font-family:monospace;font-size:9pt;">'+shortDate(bk.startDate)+'〜'+shortDate(bk.endDate)+'<br><span style="font-size:8pt;color:#555;">'+bk.days+'日</span></td>'+
+          '<td style="text-align:center;font-size:9pt;">'+bk.q+'題×'+bk.rep+'回<br><span style="font-size:8pt;color:#555;">計'+c.total.toLocaleString()+'問</span></td>'+
+          '<td style="text-align:center;font-size:9pt;"><b>'+totalHr+'h</b></td>'+
+          '<td style="text-align:center;font-size:10pt;font-weight:900;font-family:monospace;">'+c.perDay+'<span style="font-size:8pt;font-weight:normal;">題/日</span></td>'+
+          '<td style="font-size:9pt;">'+(bk.dailyMin?'①'+(bk.dailyMin/c.p1).toFixed(1)+'分<br>②'+(bk.dailyMin/c.p2).toFixed(1)+'分<br>③'+(bk.dailyMin/c.perDay).toFixed(1)+'分':'—')+'</td>'+
+          '<td style="font-size:8.5pt;"><b>①'+c.p1+'題</b> 〜'+c.p1End+'日目'+
+            '<div style="background:#ccc;height:3px;border-radius:2px;margin:2px 0;overflow:hidden;"><div style="background:#444;height:100%;width:'+p1pct+'%"></div></div>'+
+            '<b>②'+c.p2+'題</b> 〜'+c.p2End+'日目'+
+            '<div style="background:#ccc;height:3px;border-radius:2px;margin:2px 0;overflow:hidden;"><div style="background:#444;height:100%;width:'+p2pct+'%"></div></div>'+
+            '<b>③'+c.perDay+'題</b> 〜'+bk.days+'日目'+
+            '<div style="background:#ccc;height:3px;border-radius:2px;margin:2px 0;overflow:hidden;"><div style="background:#444;height:100%;width:100%"></div></div>'+
+          '</td>';
+      }
+    } else {
+      // 生活行は勉強詳細なし（空セル）
+      bookDetailCells='<td colspan="6"></td>';
+    }
+
     rows+='<tr style="'+bg+'">'+
       '<td style="font-family:monospace;text-align:center;">'+minToTime(s.startMin)+'</td>'+
       '<td style="font-family:monospace;text-align:center;">'+endTime+'</td>'+
       '<td><span class="ps-cat">'+s.cat+'</span>'+subNameHtml+dispName+'</td>'+
       '<td style="text-align:right;font-family:monospace;">'+s.min+'分</td>'+
-      '<td style="text-align:right;font-family:monospace;">'+minToHM(s.min)+'</td>'+
-      '<td style="text-align:right;font-family:monospace;">'+pct+'%</td>'+
+      bookDetailCells+
     '</tr>';
   });
 
@@ -3082,91 +3076,15 @@ function printSchedule(){
     // 参考書名を優先表示
     var dispName=s.bookLabel||s.label;
     var subName=(s.bookLabel&&s.label&&s.bookLabel!==s.label)?
-      '<span style="font-size:10pt;color:#555;display:block;margin-top:2pt;">'+s.label+'</span>':'';
+      '<span style="font-size:6.5pt;color:#777;display:block;">'+s.label+'</span>':'';
     legendHTML+='<div class="ps-legend-item">'+
       '<div class="ps-legend-dot" style="background:'+col+';margin-top:2pt;"></div>'+
       '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div></div>';
   });
 
   var freeDisp=window._schedFree>0?minToHM(window._schedFree):'0分';
-
-  // ===== ページ3: 参考書一覧 =====
-  var booksHTML='';
-  if(books.length>0){
-    var sortedBooks=books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
-    sortedBooks.forEach(function(b){
-      var c=b.computed;
-      var dm=b.dailyMin||0;
-      var totalHr=Math.round(c.total*2/60);
-      var mpq1=dm>0?(dm/c.p1).toFixed(1):'—';
-      var mpq2=dm>0?(dm/c.p2).toFixed(1):'—';
-      var mpq3=dm>0?(dm/c.perDay).toFixed(1):'—';
-      booksHTML+=
-        '<div class="ps-book-card">'+
-          '<div style="display:flex;align-items:flex-start;gap:16pt;">'+
-            // 左: 基本情報 + ノルマ
-            '<div style="flex:1;">'+
-              (b.subject?'<div class="ps-book-subject">📚 '+esc(b.subject)+'</div>':'')+
-              '<div class="ps-book-name">'+esc(b.name)+'</div>'+
-              '<div class="ps-book-dates">📅 '+fmtDate(b.startDate)+' 〜 '+fmtDate(b.endDate)+
-                ' <span style="background:#e0e0e0;border-radius:4pt;padding:1pt 6pt;font-size:10pt;">'+b.days+'日間</span></div>'+
-              '<div class="ps-book-stats">'+
-                '<div class="ps-book-stat"><span class="ps-book-stat-lbl">問題数</span><span class="ps-book-stat-val">'+b.q+'<span>題</span></span></div>'+
-                '<div class="ps-book-stat"><span class="ps-book-stat-lbl">反復回数</span><span class="ps-book-stat-val">'+b.rep+'<span>回</span></span></div>'+
-                '<div class="ps-book-stat"><span class="ps-book-stat-lbl">総問題数</span><span class="ps-book-stat-val">'+c.total.toLocaleString()+'<span>問</span></span></div>'+
-                '<div class="ps-book-stat"><span class="ps-book-stat-lbl">推定時間</span><span class="ps-book-stat-val">'+totalHr+'<span>h</span></span></div>'+
-              '</div>'+
-              (dm>0?
-                '<div style="background:#fff8e0;border:1pt solid #e8d080;border-radius:5pt;padding:6pt 10pt;font-size:11pt;">'+
-                  '1日 <b>'+dm+'分</b> → 1題あたり　'+
-                  '①'+mpq1+'分　②'+mpq2+'分　③'+mpq3+'分'+
-                '</div>':'')
-            +'</div>'+
-            // 右: ノルマ + フェーズ
-            '<div style="min-width:180pt;">'+
-              '<div class="ps-book-hero">'+
-                '<div class="ps-book-hero-lbl">1日ノルマ（最終目標）</div>'+
-                '<div class="ps-book-hero-num">'+c.perDay+'</div>'+
-                '<div class="ps-book-hero-unit">題 / 日</div>'+
-              '</div>'+
-              '<div class="ps-book-phases">'+
-                '<div class="ps-book-phase-hd">📈 フェーズ計画</div>'+
-                '<div class="ps-book-phase-row">'+
-                  '<div class="ps-book-phase-num">①</div>'+
-                  '<div class="ps-book-phase-info">'+
-                    '<div>ウォームアップ期</div>'+
-                    '<div class="ps-book-phase-period">1〜'+c.p1End+'日目（'+c.p1End+'日）</div>'+
-                  '</div>'+
-                  '<div><div class="ps-book-phase-val">'+c.p1+'<span style="font-size:10pt;font-weight:400;"> 題/日</span></div>'+
-                  (dm>0?'<div class="ps-book-phase-mpq">'+mpq1+'分/題</div>':'')+'</div>'+
-                '</div>'+
-                '<div class="ps-book-phase-row">'+
-                  '<div class="ps-book-phase-num">②</div>'+
-                  '<div class="ps-book-phase-info">'+
-                    '<div>加速期</div>'+
-                    '<div class="ps-book-phase-period">'+(c.p1End+1)+'〜'+c.p2End+'日目（'+(c.p2End-c.p1End)+'日）</div>'+
-                  '</div>'+
-                  '<div><div class="ps-book-phase-val">'+c.p2+'<span style="font-size:10pt;font-weight:400;"> 題/日</span></div>'+
-                  (dm>0?'<div class="ps-book-phase-mpq">'+mpq2+'分/題</div>':'')+'</div>'+
-                '</div>'+
-                '<div class="ps-book-phase-row">'+
-                  '<div class="ps-book-phase-num">③</div>'+
-                  '<div class="ps-book-phase-info">'+
-                    '<div>完走期</div>'+
-                    '<div class="ps-book-phase-period">'+(c.p2End+1)+'〜'+b.days+'日目（'+(b.days-c.p2End)+'日）</div>'+
-                  '</div>'+
-                  '<div><div class="ps-book-phase-val">'+c.perDay+'<span style="font-size:10pt;font-weight:400;"> 題/日</span></div>'+
-                  (dm>0?'<div class="ps-book-phase-mpq">'+mpq3+'分/題</div>':'')+'</div>'+
-                '</div>'+
-              '</div>'+
-            '</div>'+
-          '</div>'+
-        '</div>';
-    });
-  }
-
   document.getElementById('po-sched').innerHTML=
-    /* ===== ページ1（横向き）: グラフ ＋ 凡例 ===== */
+    /* ===== ページ1: グラフ ＋ 凡例 ===== */
     '<div class="ps-page1">'+
       '<div class="ps-hd">'+
         '<div class="ps-hd-title">1日スケジュール</div>'+
@@ -3174,49 +3092,42 @@ function printSchedule(){
       '</div>'+
       '<div class="ps-chart-area">'+
         '<div class="ps-chart-box">'+
-          '<img src="'+svgDataUrl+'" style="width:260pt;height:260pt;">'+
-          '<div style="margin-top:12pt;font-size:12pt;">自由時間: <b>'+freeDisp+'</b></div>'+
+          '<img src="'+svgDataUrl+'" style="width:220pt;height:220pt;">'+
+          '<div style="margin-top:8pt;font-size:9pt;">自由時間: <b>'+freeDisp+'</b></div>'+
         '</div>'+
-        '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:13pt;font-weight:700;margin-bottom:12pt;border-bottom:2pt solid #bbb;padding-bottom:6pt;">凡例</div>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:9pt;font-weight:700;margin-bottom:8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt;">凡例</div>'+
           '<div class="ps-legend-grid">'+legendHTML+'</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
-    /* ===== ページ2（横向き）: スケジュール詳細表 ===== */
+    /* ===== ページ2: 詳細表 ===== */
     '<div class="ps-page2">'+
       '<div class="ps-hd">'+
-        '<div class="ps-hd-title">スケジュール詳細</div>'+
+        '<div class="ps-hd-title">1日スケジュール — 詳細</div>'+
         '<div class="ps-hd-date">起床 '+window._schedWake+' 〜 就寝 '+window._schedSleep+'　（活動 '+minToHM(window._schedAwake)+'）</div>'+
       '</div>'+
       '<table class="ps-table">'+
         '<thead><tr>'+
-          '<th style="width:9%;text-align:center;">開始</th>'+
-          '<th style="width:9%;text-align:center;">終了</th>'+
-          '<th style="width:42%">項目</th>'+
-          '<th style="width:9%;text-align:right;">分</th>'+
-          '<th style="width:15%;text-align:right;">時間</th>'+
-          '<th style="width:12%;text-align:right;">割合</th>'+
+          '<th style="width:6%;text-align:center;">開始</th>'+
+          '<th style="width:6%;text-align:center;">終了</th>'+
+          '<th style="width:14%">項目</th>'+
+          '<th style="width:5%;text-align:center;">学習時間</th>'+
+          '<th style="width:10%;text-align:center;">期間</th>'+
+          '<th style="width:9%;text-align:center;">問題数</th>'+
+          '<th style="width:5%;text-align:center;">推定時間</th>'+
+          '<th style="width:7%;text-align:center;">1日ノルマ</th>'+
+          '<th style="width:9%;text-align:center;">1題あたり(分)</th>'+
+          '<th style="width:29%">フェーズ計画</th>'+
         '</tr></thead>'+
         '<tbody>'+rows+'</tbody>'+
         '<tfoot><tr class="ps-total-row">'+
           '<td colspan="3"><b>合計</b></td>'+
-          '<td style="text-align:right;font-family:monospace;"><b>1440分</b></td>'+
-          '<td style="text-align:right;font-family:monospace;"><b>24時間</b></td>'+
-          '<td style="text-align:right;font-family:monospace;"><b>100%</b></td>'+
+          '<td style="text-align:center;font-family:monospace;"><b>1440分</b></td>'+
+          '<td colspan="6"></td>'+
         '</tr></tfoot>'+
       '</table>'+
-    '</div>'+
-    /* ===== ページ3（横向き）: 参考書一覧 ===== */
-    (books.length>0?
-      '<div class="ps-page3">'+
-        '<div class="ps-hd">'+
-          '<div class="ps-hd-title">参考書一覧（'+books.length+'冊）</div>'+
-          '<div class="ps-hd-date">出力日: '+today()+'</div>'+
-        '</div>'+
-        '<div class="ps-books-grid">'+booksHTML+'</div>'+
-      '</div>'
-    :'');
+    '</div>';
 
   document.getElementById('po-single').style.display='none';
   document.getElementById('po-all').style.display='none';
