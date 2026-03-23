@@ -2675,11 +2675,35 @@ function _schedDraw(){
   legendEl.innerHTML='';
   segs.forEach(function(seg,i){
     var item=document.createElement('div'); item.className='legend-item';
+    item.style.cssText='align-items:flex-start;';
     var dot=document.createElement('div'); dot.className='legend-dot';
-    dot.style.background=getColor(seg.row,i);
-    var txt=document.createElement('span');
-    txt.textContent=((seg.row&&seg.row.startTime)?seg.row.startTime+' ':'')+seg.label+' '+minToHM(seg.min);
-    item.appendChild(dot); item.appendChild(txt);
+    dot.style.cssText='background:'+getColor(seg.row,i)+';margin-top:3px;flex-shrink:0;';
+    var textWrap=document.createElement('div');
+    textWrap.style.cssText='display:flex;flex-direction:column;gap:1px;min-width:0;';
+
+    // メイン行：時刻 + 参考書名（or ラベル）+ 時間
+    var mainLine=document.createElement('span');
+    var timeStr=(seg.row&&seg.row.startTime)?seg.row.startTime+' ':'';
+    // 勉強行の場合：参考書名（row.label）を優先して表示
+    var displayName = seg.label; // デフォルトは科目名
+    if(seg.row && seg.row.cat==='勉強' && seg.row.label && seg.row.label !== seg.row.subject){
+      displayName = seg.row.label; // 参考書名
+    }
+    mainLine.textContent = timeStr + displayName + ' ' + minToHM(seg.min);
+    mainLine.style.cssText='font-size:11px;color:var(--text2);';
+
+    // サブ行：参考書名がある場合は科目名を小さく表示
+    if(seg.row && seg.row.cat==='勉強' && seg.row.label && seg.row.label !== seg.row.subject && seg.row.subject){
+      var subLine=document.createElement('span');
+      subLine.textContent=seg.row.subject;
+      subLine.style.cssText='font-size:9px;color:var(--text3);font-family:"DM Mono",monospace;';
+      textWrap.appendChild(mainLine);
+      textWrap.appendChild(subLine);
+    } else {
+      textWrap.appendChild(mainLine);
+    }
+
+    item.appendChild(dot); item.appendChild(textWrap);
     // 凡例クリックでも編集可
     item.style.cursor='pointer';
     item.title='クリックして編集';
@@ -2993,10 +3017,15 @@ function printSchedule(){
     var pct=(s.min/1440*100).toFixed(1);
     var endTime=s.startMin!==undefined?minToTime(s.startMin+s.min):'—';
     var bg=i%2===0?'':'background:#f5f5f5;';
+    // 参考書名を優先表示
+    var dispName=s.label;
+    if(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject) dispName=s.row.label;
+    var subNameHtml=(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject&&s.row.subject)?
+      '<span class="ps-cat">'+s.row.subject+'</span>':'';
     rows+='<tr style="'+bg+'">'+
       '<td style="font-family:monospace;text-align:center;">'+minToTime(s.startMin)+'</td>'+
       '<td style="font-family:monospace;text-align:center;">'+endTime+'</td>'+
-      '<td><span class="ps-cat">'+s.cat+'</span>'+s.label+'</td>'+
+      '<td><span class="ps-cat">'+s.cat+'</span>'+subNameHtml+dispName+'</td>'+
       '<td style="text-align:right;font-family:monospace;">'+s.min+'分</td>'+
       '<td style="text-align:right;font-family:monospace;">'+minToHM(s.min)+'</td>'+
       '<td style="text-align:right;font-family:monospace;">'+pct+'%</td>'+
@@ -3011,9 +3040,15 @@ function printSchedule(){
   var legendHTML='';
   segs.forEach(function(s,i){
     var col=getColor(s.row,i);
+    var timeStr=s.startMin!==undefined?minToTime(s.startMin)+' ':'';
+    // 参考書名を優先表示
+    var dispName=s.label;
+    if(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject) dispName=s.row.label;
+    var subName=(s.row&&s.row.cat==='勉強'&&s.row.label&&s.row.label!==s.row.subject&&s.row.subject)?
+      '<span style="font-size:6.5pt;color:#777;display:block;">'+s.row.subject+'</span>':'';
     legendHTML+='<div class="ps-legend-item">'+
-      '<div class="ps-legend-dot" style="background:'+col+'"></div>'+
-      '<span>'+(s.startMin!==undefined?minToTime(s.startMin)+' ':'')+s.label+' '+minToHM(s.min)+'</span></div>';
+      '<div class="ps-legend-dot" style="background:'+col+';margin-top:2pt;"></div>'+
+      '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div></div>';
   });
 
   var freeDisp=window._schedFree>0?minToHM(window._schedFree):'0分';
