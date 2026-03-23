@@ -1067,7 +1067,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
           </div>
           <div class="sched-total-val" id="sched-total-val">—</div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <button id="undo-btn" class="btn-ghost" onclick="undoSched()" disabled style="opacity:0.4;font-size:12px;">↩ 戻る</button>
           <button class="btn-ghost" onclick="schedReset()">リセット</button>
           <button onclick="openAiSchedModal()" style="background:linear-gradient(135deg,#1a1a2e,#16213e);
             border:1px solid #3a3a6a;border-radius:10px;padding:10px;color:#8ab4f8;
@@ -1193,8 +1194,9 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
     </div>
     <span class="imp-sel-all" onclick="toggleImpAll()">すべて選択 / 解除</span>
     <div class="imp-list" id="imp-list"></div>
-    <div class="imp-btns">
-      <button class="imp-apply" onclick="applyImpModal()">✅ 引用して追加</button>
+    <div class="imp-btns" style="grid-template-columns:1fr 1fr 1fr;">
+      <button class="imp-apply" onclick="applyImpModal(false)">➕ 追加</button>
+      <button class="imp-apply" onclick="applyImpModal(true)" style="background:#555;color:#fff;">🔄 置換</button>
       <button class="imp-cancel" onclick="closeImpModal()">キャンセル</button>
     </div>
   </div>
@@ -2163,15 +2165,10 @@ function makeRowEl(row, isStudy){
     }
     minInp.addEventListener('change', function(){ applyMin(this); });
     minInp.addEventListener('blur',   function(){ applyMin(this); });
-    minInp.addEventListener('input', function(){
-      var v = parseInt(this.value);
-      if(!isNaN(v) && v >= 1){
-        clearTimeout(_debounce);
-        var self = this;
-        _debounce = setTimeout(function(){ applyMin(self); }, 600);
-      } else {
-        clearTimeout(_debounce);
-      }
+    minInp.addEventListener('input',  function(){
+      var self=this;
+      clearTimeout(_debounce);
+      _debounce=setTimeout(function(){ applyMin(self); }, 400);
     });
   })(row);
   minWrap.appendChild(minInp);
@@ -2278,11 +2275,13 @@ function buildSubjectSelect(id, selected, row){
 function addLifeRow(){
   var label = prompt('行動名を入力してください（例：読書、ゲームなど）','');
   if(!label || !label.trim()) return;
+  pushUndoStack();
   schedRows.push({id:'r'+(schedRowIdSeq++), label:label.trim(), startTime:'', min:30, cat:'その他'});
   renderAllRows(); schedUpdate(); schedAutoRedraw();
 }
 
 function addStudyRow(){
+  pushUndoStack();
   schedRows.push({id:'r'+(schedRowIdSeq++), label:'', startTime:'', min:60, cat:'勉強', subject:'', bookId:null});
   renderAllRows(); schedUpdate();
 }
@@ -2373,12 +2372,17 @@ function toggleImpAll(){
   renderImpList();
 }
 
-function applyImpModal(){
+function applyImpModal(doReplace){
   var keys = Object.keys(_impSelected);
   if(keys.length===0){showToast('引用する項目を選択してください','err');return;}
 
-  // 既存の勉強行を削除して置換
-  schedRows = schedRows.filter(function(r){return r.cat!=='勉強';});
+  // Undoスタックに現在状態を保存
+  pushUndoStack();
+
+  // 置換モードのときのみ既存の勉強行を削除
+  if(doReplace){
+    schedRows = schedRows.filter(function(r){return r.cat!=='勉強';});
+  }
 
   if(_impTab === 'subject'){
     // 科目単位
@@ -2881,6 +2885,7 @@ function saveChartPop(isNew){
   var doShift = shiftEl ? shiftEl.checked : false;
 
   if(isNew){
+    pushUndoStack();
     // 新規行追加
     var subjV   = subjEl ? subjEl.value : '';
     var labelV  = labelEl ? labelEl.value.trim() : '';
@@ -2958,6 +2963,7 @@ function shiftRowsAfterBy(fromTime, deltaMin, excludeId){
 
 function deleteChartRow(){
   if(!_cpopSeg||!_cpopSeg.row) return;
+  pushUndoStack();
   var rid=_cpopSeg.row.id;
   schedRows=schedRows.filter(function(r){return r.id!==rid;});
   closeChartPop();
@@ -3053,6 +3059,7 @@ function printSchedule(){
 // ---- リセット ----
 function schedReset(){
   if(!confirm('スケジュールをリセットしますか？')) return;
+  pushUndoStack();
   schedRowIdSeq=0;
   schedRows=buildDefaultRows();
   renderAllRows(); schedUpdate();
@@ -3850,6 +3857,7 @@ function escHtml(s){
 
 function applyAiSched(){
   if(!_aiSchedResult) return;
+  pushUndoStack();
   var parsed = _aiSchedResult;
 
   // 起床・就寝を反映
@@ -3898,6 +3906,37 @@ function schedAutoRedraw(){
   }, 300);
 }
 
+// ===================== UNDO STACK =====================
+var _undoStack = [];
+var MAX_UNDO = 20;
+
+function pushUndoStack(){
+  // schedRows のディープコピーを保存
+  var snap = JSON.parse(JSON.stringify(schedRows));
+  _undoStack.push(snap);
+  if(_undoStack.length > MAX_UNDO) _undoStack.shift();
+  // 戻るボタンの表示を更新
+  updateUndoBtn();
+}
+
+function undoSched(){
+  if(_undoStack.length === 0){ showToast('これ以上戻れません', 'err'); return; }
+  schedRows = _undoStack.pop();
+  updateUndoBtn();
+  renderAllRows();
+  schedUpdate();
+  schedAutoRedraw();
+  showToast('元に戻しました ✓', 'ok');
+}
+
+function updateUndoBtn(){
+  var btn = document.getElementById('undo-btn');
+  if(!btn) return;
+  btn.disabled = _undoStack.length === 0;
+  btn.style.opacity = _undoStack.length === 0 ? '0.4' : '1';
+  btn.textContent = '↩ 戻る' + (_undoStack.length > 0 ? '（'+_undoStack.length+'）' : '');
+}
+
 // ===================== RELATIONAL SYNC =====================
 
 // スケジュール行 → 参考書（min変更時）
@@ -3905,10 +3944,13 @@ function syncSchedToBook(row){
   if(!row.bookId) return;
   var book = books.find(function(b){ return b.id === row.bookId; });
   if(!book) return;
-  book.dailyMin = row.min;
+  var newDailyMin = row.min;
+  // early return なし：必ず更新してDOMに反映
+  book.dailyMin = newDailyMin;
+  book.computed = compute(book.q, book.rep, book.days);
   saveBooks();
-  renderList(); // 常に再描画
-  showToast(book.name + ' の学習時間を ' + row.min + '分/日 に更新しました ✓', 'ok');
+  renderBookItemById(book.id);
+  showToast(book.name + ' → ' + newDailyMin + '分/日', 'ok');
 }
 
 // 指定した参考書カードのDOMを差し替え（data-book-id で特定）
