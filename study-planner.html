@@ -459,7 +459,9 @@ body.gantt-active #pane-gantt{width:100%;}
 .sched-col-hd span{font-family:"DM Mono",monospace;font-size:8px;color:var(--text3);
   letter-spacing:.1em;text-transform:uppercase;}
 @media print{
-  .ps-wrap{font-family:"Noto Sans JP",sans-serif;}
+  .ps-wrap{font-family:"Noto Sans JP",sans-serif;page:landscape;}
+  .ps-page1{page:landscape;}
+  .ps-page2{page:landscape;}
   .ps-hd{display:flex;align-items:center;justify-content:space-between;
     padding-bottom:10px;border-bottom:2px solid #000;margin-bottom:16px;}
   .ps-hd-title{font-size:18pt;font-weight:900;}
@@ -469,7 +471,8 @@ body.gantt-active #pane-gantt{width:100%;}
   .ps-chart-area{display:flex;gap:20pt;align-items:flex-start;}
   .ps-chart-box{text-align:center;flex-shrink:0;}
   .ps-legend{margin-top:0;}
-  .ps-legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:3pt 12pt;}
+  .ps-legend-grid{display:flex;flex-direction:column;flex-wrap:wrap;
+    max-height:180pt;gap:3pt 16pt;align-content:flex-start;}
   .ps-legend-item{display:flex;align-items:flex-start;gap:5pt;font-size:8pt;
     margin-bottom:3pt;break-inside:avoid;page-break-inside:avoid;}
   .ps-legend-dot{width:9pt;height:9pt;border-radius:2pt;flex-shrink:0;margin-top:1pt;}
@@ -713,22 +716,26 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
 /* 列：時刻(80px) | ラベル(1fr) | 分(56px) | 単位(20px) | 削除(28px) */
 .sched-row{
   display:grid;
-  grid-template-columns:80px 1fr 56px 20px 28px;
+  grid-template-columns:110px 1fr 52px 20px 28px;
   align-items:center;gap:6px;
   padding:9px 0;border-bottom:1px solid var(--border2);}
 .sched-row:last-child{border-bottom:none;}
 .sched-col-hd{
   display:grid;
-  grid-template-columns:80px 1fr 56px 20px 28px;
+  grid-template-columns:110px 1fr 52px 20px 28px;
   align-items:center;gap:6px;
   padding:4px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.sched-row-time{display:flex;flex-direction:column;gap:2px;}
 .sched-row-time input[type=time]{
   width:100%;background:var(--bg-input);border:1px solid var(--border-input);
-  border-radius:8px;padding:7px 5px;color:var(--text);
-  font-family:'DM Mono',monospace;font-size:13px;outline:none;
+  border-radius:8px;padding:6px 5px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:12px;outline:none;
   transition:border-color .2s;}
 .sched-row-time input[type=time]:focus{border-color:var(--gold);}
-.sched-row-label{min-width:0;overflow:hidden;font-size:13px;color:var(--text);}
+.sched-row-end{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);
+  text-align:center;padding:0 2px;line-height:1.2;}
+.sched-row-label{min-width:0;overflow:hidden;font-size:13px;color:var(--text);
+  display:flex;flex-direction:column;justify-content:center;}
 .sched-row-label select{width:100%;}
 .sched-row-min input{
   width:100%;background:var(--bg-input);border:1px solid var(--border-input);
@@ -757,8 +764,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .btn-row{flex-direction:column;}
   .btn-row .btn-gold,.btn-row .btn-ghost{flex:none;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row{grid-template-columns:68px 1fr 50px 18px 26px;}
-  .sched-col-hd{grid-template-columns:68px 1fr 50px 18px 26px;}
+  .sched-row{grid-template-columns:94px 1fr 46px 16px 24px;}
+  .sched-col-hd{grid-template-columns:94px 1fr 46px 16px 24px;}
   .sched-row-time input[type=time]{font-size:11px;padding:5px 4px;}
   .sched-row-min input{font-size:11px;padding:5px 4px;}
   .list-header{flex-direction:column;align-items:flex-start;gap:8px;}
@@ -777,8 +784,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .wrap{max-width:100%;}
   .card{padding:18px 18px;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row{grid-template-columns:74px 1fr 54px 18px 26px;}
-  .sched-col-hd{grid-template-columns:74px 1fr 54px 18px 26px;}
+  .sched-row{grid-template-columns:104px 1fr 50px 18px 26px;}
+  .sched-col-hd{grid-template-columns:104px 1fr 50px 18px 26px;}
   .list-header>div{flex-wrap:wrap;gap:6px;}
   .btn-pdf-all{font-size:12px;padding:8px 12px;}
   .color-swatches{grid-template-columns:repeat(5,1fr);}
@@ -790,8 +797,8 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   .wrap{width:100%;max-width:860px;}
   .card{padding:22px 26px;}
   .sched-grid{grid-template-columns:1fr 1fr;}
-  .sched-row{grid-template-columns:80px 1fr 60px 20px 28px;}
-  .sched-col-hd{grid-template-columns:80px 1fr 60px 20px 28px;}
+  .sched-row{grid-template-columns:110px 1fr 56px 20px 28px;}
+  .sched-col-hd{grid-template-columns:110px 1fr 56px 20px 28px;}
   .gantt-toolbar{flex-wrap:wrap;}
   body.gantt-active .wrap{max-width:100%;padding:0 24px;}
   body.gantt-active .tabs{max-width:860px;margin:0 auto;}
@@ -1054,14 +1061,14 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
         </div>
         <div class="sched-section-title">生活・行動</div>
         <div class="sched-col-hd">
-          <span>開始時刻</span><span>項目</span><span>時間(分)</span><span></span><span></span>
+          <span>開始〜終了</span><span>項目</span><span>分</span><span></span><span></span>
         </div>
         <div id="sched-life-list"></div>
         <button class="btn-sched-add" onclick="addLifeRow()" style="margin-top:8px;">＋ 行動を追加</button>
         <div class="sched-section-title" style="margin-top:18px;">勉強時間</div>
         <button class="btn-import-study" onclick="openImpModal()">📚 登録済み参考書から引用</button>
         <div class="sched-col-hd" style="margin-top:10px;">
-          <span>開始時刻</span><span>科目</span><span>時間(分)</span><span></span><span></span>
+          <span>開始〜終了</span><span>科目</span><span>分</span><span></span><span></span>
         </div>
         <div id="sched-study-list"></div>
         <button class="btn-sched-add" onclick="addStudyRow()" style="margin-top:8px;">＋ 科目を追加</button>
@@ -2060,14 +2067,36 @@ function makeRowEl(row, isStudy){
   div.className = 'sched-row';
   div.id = 'row-'+row.id;
 
-  // 開始時刻
+  // 開始時刻 + 終了時間
   var timeWrap = document.createElement('div');
   timeWrap.className = 'sched-row-time';
   var timeInp = document.createElement('input');
   timeInp.type = 'time'; timeInp.value = row.startTime || '';
   if(row.fixed) timeInp.style.opacity = '0.5';
-  timeInp.onchange = (function(r){ return function(){ r.startTime=this.value; schedUpdate(); schedAutoRedraw(); }; })(row);
+  // 終了時間表示
+  var endDiv = document.createElement('div');
+  endDiv.className = 'sched-row-end';
+  endDiv.id = 'end-'+row.id;
+  function updateEndDiv(){
+    if(row.startTime && row.min > 0){
+      var endMin = timeToMin(row.startTime) + row.min;
+      endDiv.textContent = '→ ' + minToTime(endMin);
+      endDiv.style.color = 'var(--text3)';
+    } else {
+      endDiv.textContent = '';
+    }
+  }
+  updateEndDiv();
+  timeInp.onchange = (function(r, eDiv){ return function(){
+    r.startTime=this.value;
+    if(r.startTime && r.min>0){
+      var em=timeToMin(r.startTime)+r.min;
+      eDiv.textContent='→ '+minToTime(em);
+    } else { eDiv.textContent=''; }
+    schedUpdate(); schedAutoRedraw();
+  }; })(row, endDiv);
   timeWrap.appendChild(timeInp);
+  timeWrap.appendChild(endDiv);
 
   // ラベル or 科目セレクト
   var labelWrap = document.createElement('div');
@@ -2151,7 +2180,10 @@ function makeRowEl(row, isStudy){
     studyLabel.appendChild(relWrap);
     labelWrap.appendChild(studyLabel);
   } else {
-    labelWrap.textContent = row.label;
+    var lifeLbl = document.createElement('div');
+    lifeLbl.style.cssText = 'font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    lifeLbl.textContent = row.label;
+    labelWrap.appendChild(lifeLbl);
   }
 
   // 所要時間
@@ -2164,6 +2196,13 @@ function makeRowEl(row, isStudy){
     function applyMin(el){
       var v=Math.max(1,parseInt(el.value)||1);
       r.min=v; el.value=v;
+      // 終了時間表示を即時更新
+      var eDiv=document.getElementById('end-'+r.id);
+      if(eDiv){
+        if(r.startTime && v>0){
+          eDiv.textContent='→ '+minToTime(timeToMin(r.startTime)+v);
+        } else { eDiv.textContent=''; }
+      }
       syncSchedToBook(r);  // early return なし：常に同期
       schedUpdate();
       schedAutoRedraw();
@@ -2463,6 +2502,16 @@ function schedUpdate(){
 
   var actTotal=schedRows.filter(function(r){return !r.fixed;}).reduce(function(a,r){return a+(r.min||0);},0);
   var diff=awake-actTotal;
+  // 全行の終了時間表示を更新
+  schedRows.forEach(function(r){
+    var eDiv=document.getElementById('end-'+r.id);
+    if(eDiv){
+      if(r.startTime && r.min>0){
+        eDiv.textContent='→ '+minToTime(timeToMin(r.startTime)+r.min);
+        eDiv.style.color='var(--text3)';
+      } else { eDiv.textContent=''; }
+    }
+  });
   var valEl=document.getElementById('sched-total-val');
   var lblEl=document.getElementById('sched-avail-lbl');
   if(lblEl) lblEl.textContent='起床〜就寝：'+awake+'分（'+minToHM(awake)+'）';
@@ -3058,6 +3107,7 @@ function printSchedule(){
   var freeDisp=window._schedFree>0?minToHM(window._schedFree):'0分';
   document.getElementById('po-sched').innerHTML=
     /* ===== ページ1: グラフ ＋ 凡例 ===== */
+    /* ===== ページ1（横向き）: グラフ ＋ 凡例 ===== */
     '<div class="ps-page1">'+
       '<div class="ps-hd">'+
         '<div class="ps-hd-title">1日スケジュール</div>'+
@@ -3065,16 +3115,16 @@ function printSchedule(){
       '</div>'+
       '<div class="ps-chart-area">'+
         '<div class="ps-chart-box">'+
-          '<img src="'+svgDataUrl+'" style="width:220pt;height:220pt;">'+
+          '<img src="'+svgDataUrl+'" style="width:260pt;height:260pt;">'+
           '<div style="margin-top:8pt;font-size:9pt;">自由時間: <b>'+freeDisp+'</b></div>'+
         '</div>'+
-        '<div style="flex:1;">'+
+        '<div style="flex:1;min-width:0;">'+
           '<div style="font-size:9pt;font-weight:700;margin-bottom:8pt;border-bottom:1pt solid #ccc;padding-bottom:4pt;">凡例</div>'+
           '<div class="ps-legend-grid">'+legendHTML+'</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
-    /* ===== ページ2: 詳細表 ===== */
+    /* ===== ページ2（横向き）: 詳細表 ===== */
     '<div class="ps-page2">'+
       '<div class="ps-hd">'+
         '<div class="ps-hd-title">1日スケジュール — 詳細</div>'+
@@ -3082,12 +3132,12 @@ function printSchedule(){
       '</div>'+
       '<table class="ps-table">'+
         '<thead><tr>'+
-          '<th style="width:10%;text-align:center;">開始</th>'+
-          '<th style="width:10%;text-align:center;">終了</th>'+
-          '<th style="width:40%">項目</th>'+
-          '<th style="width:10%;text-align:right;">分</th>'+
-          '<th style="width:16%;text-align:right;">時間</th>'+
-          '<th style="width:14%;text-align:right;">割合</th>'+
+          '<th style="width:9%;text-align:center;">開始</th>'+
+          '<th style="width:9%;text-align:center;">終了</th>'+
+          '<th style="width:42%">項目</th>'+
+          '<th style="width:9%;text-align:right;">分</th>'+
+          '<th style="width:15%;text-align:right;">時間</th>'+
+          '<th style="width:12%;text-align:right;">割合</th>'+
         '</tr></thead>'+
         '<tbody>'+rows+'</tbody>'+
         '<tfoot><tr class="ps-total-row">'+
