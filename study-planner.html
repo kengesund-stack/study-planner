@@ -2620,7 +2620,7 @@ function _schedDraw(){
       sub.setAttribute('text-anchor','middle'); sub.setAttribute('dominant-baseline','middle');
       sub.setAttribute('fill','rgba(255,255,255,0.75)'); sub.setAttribute('font-size','8');
       sub.setAttribute('font-family','DM Mono,monospace');
-      sub.textContent = minToHM(seg.min);
+      sub.textContent = seg.min + '分';
       svg.appendChild(sub);
     }
   });
@@ -2666,7 +2666,7 @@ function _schedDraw(){
   centerTxt.setAttribute('text-anchor','middle'); centerTxt.setAttribute('fill','#ffc832');
   centerTxt.setAttribute('font-size','13'); centerTxt.setAttribute('font-weight','900');
   centerTxt.setAttribute('font-family','DM Mono,monospace');
-  centerTxt.textContent = freeMin>0?minToHM(freeMin):'0分';
+  centerTxt.textContent = freeMin>0?freeMin+'分':'0分';
   svg.appendChild(centerTxt);
   var centerSub=document.createElementNS('http://www.w3.org/2000/svg','text');
   centerSub.setAttribute('x',CX); centerSub.setAttribute('y',CY+10);
@@ -2701,7 +2701,7 @@ function _schedDraw(){
     var timeStr=(seg.row&&seg.row.startTime)?seg.row.startTime+' ':'';
     // 勉強行の場合：参考書名を優先して表示（seg.bookLabel に保存済み）
     var displayName = seg.bookLabel || seg.label;
-    mainLine.textContent = timeStr + displayName + ' ' + minToHM(seg.min);
+    mainLine.textContent = timeStr + displayName + ' ' + seg.min + '分';
     mainLine.style.cssText='font-size:11px;color:var(--text2);';
 
     // サブ行：参考書名がある場合は科目名を小さく表示
@@ -3139,11 +3139,11 @@ function printSchedule(){
       '<div class="ps-legend-item" style="font-size:'+bestF+'pt;gap:'+itemGap+'pt;">'+
         '<div class="ps-legend-dot" style="background:'+col+
           ';width:'+dotSz+'pt;height:'+dotSz+'pt;margin-top:'+Math.max(1,bestF*0.12)+'pt;"></div>'+
-        '<div><span>'+timeStr+dispName+' '+minToHM(s.min)+'</span>'+subName+'</div>'+
+        '<div><span>'+timeStr+dispName+' '+s.min+'分</span>'+subName+'</div>'+
       '</div>';
   });
 
-  var freeDisp=window._schedFree>0?minToHM(window._schedFree):'0分';
+  var freeDisp=window._schedFree>0?window._schedFree+'分':'0分';
 
   document.getElementById('po-sched').innerHTML=
     // ページ1（横向き）: グラフ＋凡例を1ページに収める
