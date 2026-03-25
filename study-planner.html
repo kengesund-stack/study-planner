@@ -239,8 +239,20 @@ body.gantt-active #pane-gantt{width:100%;}
   #print-overlay *{ color:#000!important; }
 
   @page{ size:A4;margin:20mm 12mm 15mm 12mm; }          /* 上20 右12 下15 左12 */
-  @page landscape{ size:A4 landscape;margin:18mm 10mm 12mm 10mm; } /* 上18 右10 下12 左10 */
+  @page landscape{ size:A4 landscape;margin:12mm 10mm 10mm 10mm; } /* ガントチャート用横向き */
   .landscape-page{ page:landscape; }
+  /* ガントチャート: 確実に横向き・全列1ページ幅 */
+  #po-gantt{ page:landscape; }
+  #po-gantt .pg-svg-page{
+    width:100%; overflow:hidden;
+    break-inside:avoid;
+  }
+  #po-gantt svg{
+    width:100% !important;
+    height:auto !important;
+    display:block;
+    max-width:100%;
+  }
 
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
 
@@ -507,12 +519,31 @@ body.gantt-active #pane-gantt{width:100%;}
 .gantt-svg-wrap svg{display:block;}
 /* 印刷 */
 @media print{
-  .pg-wrap{font-family:'Noto Sans JP',sans-serif;page:landscape;}
+  /* ガントチャート印刷: 横向き確定 */
+  .pg-wrap{
+    font-family:'Noto Sans JP',sans-serif;
+    page:landscape;
+  }
   .pg-hd{display:flex;align-items:center;justify-content:space-between;
-    padding-bottom:10px;border-bottom:2px solid #000;margin-bottom:12px;}
-  .pg-hd-title{font-size:16pt;font-weight:900;color:#000;}
+    padding-bottom:8px;border-bottom:2px solid #000;margin-bottom:10px;}
+  .pg-hd-title{font-size:14pt;font-weight:900;color:#000;}
   .pg-hd-date{font-size:8pt;color:#555;font-family:'DM Mono',monospace;}
-  .pg-svg{width:100%;overflow:visible;}
+  /* SVGを横幅100%に収める（全列が1ページ幅に入る）*/
+  .pg-svg-page{
+    width:100%;
+    overflow:hidden;
+    display:block;
+  }
+  .pg-svg-page svg{
+    display:block;
+    width:100% !important;
+    height:auto !important;
+    max-width:100%;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  /* 旧スタイル互換 */
+  .pg-svg{width:100%;overflow:hidden;}
   .pg-svg svg{display:block;width:100%!important;height:auto!important;
     max-width:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .pg-svg img{max-width:100%;height:auto;display:block;}
@@ -3575,17 +3606,23 @@ function printGantt(){
   var unit      = (document.getElementById('gantt-unit')||{value:'half'}).value;
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
-  // ---- 印刷用レイアウト定数（A4横サイズ向け、大きめ） ----
-  var LABEL_W  = 200;   // ラベル列幅
+  // ---- 印刷用レイアウト定数（A4横・全列1ページ幅・行は複数ページ可） ----
+  // A4横: 297mm×210mm、マージン上12下10左10右10mm → 印刷可能: 277mm×188mm
+  // SVG内部座標系は任意スケールでOK（width:100%でページ幅にフィット）
+  // ここでは1pt≈1.333px換算で内部座標を設定
+  var LABEL_W  = 200;   // ラベル列幅（内部単位）
   var ROW_H    = 46;    // 行の高さ
   var BAR_H    = 26;    // バーの高さ
   var BAR_Y_OFF= 10;    // バーのY offset
   var HDR_MONTH_H = 26; // 月名行高さ
   var HDR_TICK_H  = 22; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
-  var PRINT_W  = 1122;  // A4横 96dpi相当 (297mm)
-  var PAGE_H   = 680;   // A4横 印刷可能高さ
-  var PG_HDR_H = 50;    // ページタイトル行高さ
+  // PRINT_W: SVGの横幅（全列を収める）。印刷時はwidth:100%でページ幅にスケール
+  var PRINT_W  = 1122;  // A4横 96dpi相当 (297mm) ≈ 1122px
+  // PAGE_H: A4横の印刷可能高さ（マージン上12下10mm除く: 188mm @ 96dpi≈715px）
+  // ヘッダー行(pg-hd)の高さ約44px、ページ番号行約24px を引いた行エリア高
+  var PAGE_H   = 715;   // A4横 印刷可能高さ（内部単位、96dpiベース）
+  var PG_HDR_H = 44;    // ページタイトル行高さ
 
   // フォントサイズ（A4標準）
   var FS_MONTH = 12;   // 月名
@@ -3769,7 +3806,9 @@ function printGantt(){
 
   pages.forEach(function(pg,pi){
     var pageDiv=document.createElement('div');
-    pageDiv.style.cssText='width:100%;overflow:visible;'+(pi>0?'break-before:page;page-break-before:always;':'');
+    // 横向きA4: 全列を1ページ幅に収める。行は複数ページにまたがってよい。
+    pageDiv.className='pg-svg-page';
+    pageDiv.style.cssText='width:100%;overflow:hidden;'+(pi>0?'break-before:page;page-break-before:always;':'');
 
     if(pi===0){
       var hd=document.createElement('div');
@@ -3785,9 +3824,11 @@ function printGantt(){
     }
 
     var svgDiv=document.createElement('div');
-    svgDiv.style.cssText='width:100%;overflow:visible;';
+    // overflow:hidden + width:100% で「全列を1ページ幅にスケール」を実現
+    svgDiv.style.cssText='width:100%;overflow:hidden;display:block;';
     var pageSvg=makePrintPage(pg.rowStart, pg.rowCount);
-    // 印刷幅に合わせてSVGをスケール
+    // viewBox はそのまま維持し、width:100% height:auto でアスペクト比を保ったままページ幅に縮尺
+    pageSvg.setAttribute('preserveAspectRatio','xMinYMin meet');
     pageSvg.style.cssText='display:block;width:100%;height:auto;max-width:100%;';
     svgDiv.appendChild(pageSvg);
     pageDiv.appendChild(svgDiv);
@@ -3799,12 +3840,21 @@ function printGantt(){
   document.getElementById('po-sched').style.display='none';
   poGantt.style.display='block';
 
+  // 横向き印刷を確実にするため @page を一時的に上書き
+  var _styleEl = document.createElement('style');
+  _styleEl.id = '_gantt_print_style';
+  _styleEl.textContent = '@media print { @page { size: A4 landscape; margin: 12mm 10mm 10mm 10mm; } }';
+  document.head.appendChild(_styleEl);
+
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
       window.print();
       setTimeout(function(){
         poGantt.style.display='';
         poGantt.innerHTML='';
+        // 一時スタイル除去
+        var _s = document.getElementById('_gantt_print_style');
+        if(_s) _s.parentNode.removeChild(_s);
       },1500);
     });
   });
