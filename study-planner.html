@@ -3603,15 +3603,11 @@ function printGantt(){
   groupKeys.forEach(function(s){ rows.push({type:'header',subject:s}); grouped[s].forEach(function(b){rows.push({type:'book',subject:s,book:b});}); });
   var totalRows = rows.length;
 
-  // ---- SVGサイズ計算 ----
-  // 全列・全行を1枚に収めるため、pxPerDayは調整しない（自動スケール）
+  // ---- SVGサイズ ----
   var pxPerDay = unit==='day'?24:unit==='week'?12:unit==='half'?8:5;
   var CHART_W  = Math.max(800, totalDays * pxPerDay);
   var SVG_W    = LABEL_W + CHART_W;
-  // 全行の高さ
-  var PG_HDR_H = 36; // ページヘッダー高さ
   var SVG_H    = HDR_H + totalRows * ROW_H;
-  // 全体高さ = ページヘッダー + SVG高さ
 
   function dayOff(d){ return Math.floor((new Date(d)-minDate)/86400000); }
   function xOf(d){ return LABEL_W + dayOff(d)/totalDays*CHART_W; }
@@ -3647,20 +3643,21 @@ function printGantt(){
     while(tm<=maxDate){ ticks.push({date:new Date(tm),label:(tm.getMonth()+1)+'\u6708',major:true}); tm.setMonth(tm.getMonth()+1); }
   }
 
-  // ---- 全行分のSVGを1枚で生成 ----
+  // ---- SVG生成（全行を1枚に） ----
   var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 '+SVG_W+' '+SVG_H);
   svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
   svg.setAttribute('preserveAspectRatio','xMinYMin meet');
-  // width/height属性なし → CSS width:100%, height:auto が有効
-  svg.style.cssText='display:block;width:100%;height:auto;';
+  // iOS Safari 横向き印刷で height:auto が 0 になるバグを回避するため
+  // width/height 属性を明示的に設定した上で CSS でも上書き
+  svg.setAttribute('width', SVG_W);
+  svg.setAttribute('height', SVG_H);
 
   // 背景
   svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:SVG_H,fill:'#fff'}));
   svg.appendChild(el('rect',{x:0,y:0,width:SVG_W,height:HDR_MONTH_H,fill:'#f0f0f0'}));
   svg.appendChild(el('rect',{x:0,y:HDR_MONTH_H,width:SVG_W,height:HDR_TICK_H,fill:'#f8f8f8'}));
 
-  // 月区切り・月名
   var cm2=new Date(minDate.getFullYear(),minDate.getMonth(),1);
   while(cm2<=maxDate){
     var xm=xOf(cm2);
@@ -3669,7 +3666,6 @@ function printGantt(){
     cm2.setMonth(cm2.getMonth()+1);
   }
 
-  // 目盛り
   ticks.forEach(function(tk){
     var x=xOf(tk.date); if(x<LABEL_W||x>SVG_W) return;
     svg.appendChild(el('line',{x1:x,y1:HDR_H,x2:x,y2:SVG_H,stroke:tk.major?'#ddd':'#eee','stroke-width':tk.major?'0.8':'0.5','stroke-dasharray':'2,3'}));
@@ -3677,23 +3673,18 @@ function printGantt(){
     svg.appendChild(el('text',{x:x+2,y:HDR_H-4,fill:tk.major?'#555':'#999','font-size':FS_TICK,'font-family':'DM Mono,monospace'},tk.label));
   });
 
-  // 今日線
   if(todayOff>=0&&todayOff<=totalDays){
     var xt=xOfOff(todayOff);
     svg.appendChild(el('line',{x1:xt,y1:0,x2:xt,y2:SVG_H,stroke:'#e09000','stroke-width':'1.5','stroke-dasharray':'4,3'}));
     svg.appendChild(el('text',{x:xt+3,y:HDR_MONTH_H-3,fill:'#e09000','font-size':FS_TODAY,'font-weight':'700','font-family':'DM Mono,monospace'},'\u4eca\u65e5'));
   }
 
-  // ヘッダー区切り線
   svg.appendChild(el('line',{x1:0,y1:HDR_MONTH_H,x2:SVG_W,y2:HDR_MONTH_H,stroke:'#ccc','stroke-width':'1'}));
   svg.appendChild(el('line',{x1:0,y1:HDR_H,x2:SVG_W,y2:HDR_H,stroke:'#bbb','stroke-width':'1.5'}));
-
-  // ラベル列背景
   svg.appendChild(el('rect',{x:0,y:0,width:LABEL_W,height:SVG_H,fill:'#f8f8f8'}));
   svg.appendChild(el('line',{x1:LABEL_W,y1:0,x2:LABEL_W,y2:SVG_H,stroke:'#bbb','stroke-width':'1'}));
   svg.appendChild(el('text',{x:8,y:HDR_H/2+4,fill:'#777','font-size':FS_LABEL,'font-weight':'700'},'\u53c2\u8003\u66f8'));
 
-  // 全行描画
   rows.forEach(function(row,i){
     var ry=HDR_H+i*ROW_H;
     if(row.type==='header'){
@@ -3729,25 +3720,48 @@ function printGantt(){
       svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#666','font-size':'8','font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
     }
   });
-
-  // ラベル列右境界線（最前面）
   svg.appendChild(el('line',{x1:LABEL_W,y1:0,x2:LABEL_W,y2:SVG_H,stroke:'#bbb','stroke-width':'1'}));
 
-  // ---- po-gantt 構築（1ページ・全行） ----
+  // ---- SVGをdata:URIに変換してimgタグに埋め込む ----
+  // iOS Safari では inline SVGの height:auto が横向き時に0になるバグがある。
+  // <img src="data:image/svg+xml..."> は iOS Safari でも width:100% が正常動作する。
+  var serializer = new XMLSerializer();
+  var svgStr = serializer.serializeToString(svg);
+  // Noto Sans JP フォントを使用しているため、フォントが埋め込まれないが
+  // 印刷時はシステムフォントにフォールバックするので許容範囲
+  var svgB64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+
+  // ---- po-gantt 構築 ----
   var poGantt=document.getElementById('po-gantt');
   poGantt.innerHTML='';
 
-  // ページヘッダー
   var hd=document.createElement('div');
   hd.className='pg-hd';
   hd.innerHTML='<div class="pg-hd-title">\u30ac\u30f3\u30c8\u30c1\u30e3\u30fc\u30c8 \u2014 \u53c2\u8003\u66f8\u30b9\u30b1\u30b8\u30e5\u30fc\u30eb v1.1</div>'+
                '<div class="pg-hd-date">\u51fa\u529b\u65e5: '+today()+'</div>';
   poGantt.appendChild(hd);
 
-  // SVGラッパー（印刷時に全体を1ページに収める）
+  // imgタグで埋め込む（アスペクト比をstyleで明示）
+  var img = document.createElement('img');
+  img.src = svgB64;
+  // aspect-ratio を明示することで iOS Safari でも高さが正しく計算される
+  img.style.cssText = [
+    'display:block',
+    'width:100%',
+    'height:auto',
+    // aspect-ratioプロパティ: iOS 15以降でサポート
+    'aspect-ratio:'+SVG_W+'/'+SVG_H,
+    '-webkit-print-color-adjust:exact',
+    'print-color-adjust:exact'
+  ].join(';');
+  img.setAttribute('width', SVG_W);
+  img.setAttribute('height', SVG_H);
+
   var svgWrap=document.createElement('div');
   svgWrap.id='pg-svg-wrap';
-  svgWrap.appendChild(svg);
+  // ラッパーにもaspect-ratioを設定（iOS 15+対応）
+  svgWrap.style.cssText='width:100%;display:block;overflow:hidden;aspect-ratio:'+SVG_W+'/'+SVG_H+';';
+  svgWrap.appendChild(img);
   poGantt.appendChild(svgWrap);
 
   document.getElementById('po-single').style.display='none';
@@ -3756,52 +3770,38 @@ function printGantt(){
   poGantt.style.display='block';
 
   // ---- 印刷スタイルを動的挿入 ----
-  // 全行・全列を1ページに収める戦略:
-  // - @page { size: A4 landscape } → Chrome/Firefox/Safari(Mac)で横向き
-  // - SVGをwidth:100%, height:autoにするとviewBoxのアスペクト比でスケール
-  // - 縦方向もそれに合わせて縮小 → 全行が1ページに収まる
-  // - iOS Safari: @page sizeは無視されるが、transform:scale()でフィットさせる
   var _gps = document.getElementById('_gantt_ps');
   if(_gps) _gps.parentNode.removeChild(_gps);
   var _gpsNew = document.createElement('style');
   _gpsNew.id = '_gantt_ps';
-
-  // SVGのアスペクト比を計算（横:縦 = SVG_W : SVG_H + PG_HDR_H）
-  // A4横の印刷可能エリア比: 277mm : 188mm = 1.474
-  // SVGの比: SVG_W : (SVG_H + PG_HDR_H)
-  // SVGがA4横より縦長の場合は縮小が必要
-  var totalH = PG_HDR_H + SVG_H;
-
   _gpsNew.textContent = [
     '@media print {',
-    '  @page {',
-    '    size: A4 landscape;',
-    '    margin: 8mm 8mm 8mm 8mm;',
-    '  }',
-    '  #po-gantt {',
-    '    width: 100% !important;',
-    '    display: block !important;',
-    '  }',
+    // Chrome/Firefox/Safari Mac: 横向きA4
+    '  @page { size: A4 landscape; margin: 8mm; }',
+    '',
+    '  #po-gantt { width: 100% !important; display: block !important; }',
+    '',
     '  .pg-hd {',
-    '    display: flex;',
-    '    align-items: center;',
-    '    justify-content: space-between;',
-    '    padding-bottom: 6px;',
-    '    border-bottom: 2px solid #000;',
-    '    margin-bottom: 8px;',
+    '    display: flex !important;',
+    '    align-items: center !important;',
+    '    justify-content: space-between !important;',
+    '    padding-bottom: 6px !important;',
+    '    border-bottom: 2px solid #000 !important;',
+    '    margin-bottom: 8px !important;',
     '  }',
-    // SVGラッパー: width:100%にしてSVGを横幅フィット
-    // height:autoでアスペクト比を維持 → 全行が縦方向に収まる
+    '  .pg-hd-title { font-size: 13pt !important; font-weight: 900 !important; color: #000 !important; }',
+    '  .pg-hd-date  { font-size: 7.5pt !important; color: #555 !important; font-family: "DM Mono",monospace !important; }',
+    '',
     '  #pg-svg-wrap {',
-    '    width: 100%;',
-    '    display: block;',
-    '    overflow: hidden;',
+    '    display: block !important;',
+    '    width: 100% !important;',
+    '    overflow: hidden !important;',
     '  }',
-    '  #pg-svg-wrap svg {',
-    '    display: block;',
+    // imgタグはiOS Safariでもwidth:100%,height:autoが正常動作する
+    '  #pg-svg-wrap img {',
+    '    display: block !important;',
     '    width: 100% !important;',
     '    height: auto !important;',
-    '    max-height: 90vh;',  // 印刷時のページ高さに収める
     '    -webkit-print-color-adjust: exact !important;',
     '    print-color-adjust: exact !important;',
     '  }',
@@ -3809,7 +3809,8 @@ function printGantt(){
   ].join('\n');
   document.head.appendChild(_gpsNew);
 
-  requestAnimationFrame(function(){
+  // imgが読み込まれてから印刷する
+  img.onload = function(){
     requestAnimationFrame(function(){
       window.print();
       setTimeout(function(){
@@ -3819,7 +3820,31 @@ function printGantt(){
         if(_s) _s.parentNode.removeChild(_s);
       },1500);
     });
-  });
+  };
+  // フォールバック: 500ms後に印刷（onloadが発火しない場合）
+  var printTimer = setTimeout(function(){
+    if(poGantt.style.display !== '') {
+      window.print();
+      setTimeout(function(){
+        poGantt.style.display='';
+        poGantt.innerHTML='';
+        var _s = document.getElementById('_gantt_ps');
+        if(_s) _s.parentNode.removeChild(_s);
+      },1500);
+    }
+  }, 800);
+  img.onload = function(){
+    clearTimeout(printTimer);
+    requestAnimationFrame(function(){
+      window.print();
+      setTimeout(function(){
+        poGantt.style.display='';
+        poGantt.innerHTML='';
+        var _s = document.getElementById('_gantt_ps');
+        if(_s) _s.parentNode.removeChild(_s);
+      },1500);
+    });
+  };
 }
 
 function dateStr(d){
