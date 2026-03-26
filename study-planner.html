@@ -219,6 +219,16 @@ body.gantt-active #pane-gantt{width:100%;}
 /* ===================== SHOW/HIDE ===================== */
 .gone{display:none;}
 
+/* ===================== IFRAME PRINT (ガントPDF用) ===================== */
+/* iframe.contentWindow.print()が失敗した場合のフォールバック:
+   window.print()を呼ぶと通常のprint overlayが表示されてしまうが、
+   iframeが存在するときはiframeを全画面表示して印刷する */
+@media print {
+  body > *:not(#_gantt_print_iframe):not(#print-overlay) {
+    /* 通常の印刷スタイルに任せる */
+  }
+}
+
 /* ===================== PRINT OVERLAY ===================== */
 /* The print overlay sits outside normal flow, always rendered but hidden on screen */
 #print-overlay{
@@ -3800,24 +3810,26 @@ function printGantt(){
   document.getElementById('po-sched').style.display='none';
   poGantt.style.display='block';
 
-  // ===== iOS Safari 対応: SVG → Canvas → PNG → 別window印刷 =====
-  // #print-overlay + @page landscape の組み合わせでiOS Safariが真っ白になるのを回避
-  // 別windowにPNGだけを配置して印刷することで完全回避
+  // ===== iOS Safari 対応: SVG → Canvas → PNG → iframe印刷 =====
+  // window.open()はiOSで非同期コールバック内からだとブロックされるため使用不可
+  // iframeはユーザージェスチャー不要・ポップアップ制限なしで動作する
 
   var containers = poGantt.querySelectorAll('.gantt-svg-container');
   if(containers.length === 0){
-    // gantt-svg-containerがない場合（旧コード互換）
     setTimeout(function(){ window.print(); }, 300);
     return;
   }
 
+  // ---- 変換中トースト表示 ----
+  showToast('PDF準備中…', '');
+
   var total = containers.length;
   var done = 0;
-  var pngPages = new Array(total); // 順序を保持
+  var pngPages = new Array(total);
 
   containers.forEach(function(container, idx){
     var svgEl = container.querySelector('svg');
-    if(!svgEl){ done++; pngPages[idx] = null; if(done===total) doPrintInNewWin(); return; }
+    if(!svgEl){ pngPages[idx] = null; done++; if(done===total) doPrintViaIframe(); return; }
 
     var W = parseInt(svgEl.getAttribute('width'));
     var H = parseInt(svgEl.getAttribute('height'));
@@ -3832,40 +3844,32 @@ function printGantt(){
     tmpImg.onload = function(){
       ctx.drawImage(tmpImg, 0, 0, W, H);
       pngPages[idx] = {src: canvas.toDataURL('image/png'), w: W, h: H};
-      done++;
-      if(done === total) doPrintInNewWin();
+      done++; if(done === total) doPrintViaIframe();
     };
     tmpImg.onerror = function(){
       pngPages[idx] = null;
-      done++;
-      if(done === total) doPrintInNewWin();
+      done++; if(done === total) doPrintViaIframe();
     };
     tmpImg.src = svgUri;
   });
 
-  function doPrintInNewWin(){
-    // ヘッダーHTML取得
+  function doPrintViaIframe(){
+    var validPages = pngPages.filter(function(p){ return p !== null; });
+
+    // ヘッダーHTML
     var hdEl = poGantt.querySelector('.pg-hd');
     var hdHtml = hdEl ? hdEl.outerHTML : '';
 
-    // 有効なPNGページのみ
-    var validPages = pngPages.filter(function(p){ return p !== null; });
-    if(validPages.length === 0){ window.print(); return; }
-
-    // 別ウィンドウHTML構築
-    var bodyParts = [];
-    validPages.forEach(function(p, i){
-      var pageBreak = i > 0 ? 'page-break-before:always;' : '';
-      bodyParts.push(
-        '<div style="' + pageBreak + 'width:100%;overflow:hidden;">' +
-        (i === 0 ? hdHtml : '<div style="font-size:8pt;color:#888;text-align:right;margin-bottom:4px;">' + (i+1) + ' / ' + validPages.length + ' ページ</div>') +
+    // iframeに書き込むHTML
+    var bodyParts = validPages.map(function(p, i){
+      return '<div style="' + (i > 0 ? 'page-break-before:always;' : '') + 'width:100%;overflow:hidden;">' +
+        (i === 0 ? hdHtml : '') +
         '<img src="' + p.src + '" style="display:block;width:100%;height:auto;' +
           '-webkit-print-color-adjust:exact;print-color-adjust:exact;">' +
-        '</div>'
-      );
+        '</div>';
     });
 
-    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+    var iframeHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
       '@page{size:A4 landscape;margin:8mm;}' +
       '*{box-sizing:border-box;margin:0;padding:0;}' +
       'body{background:#fff;font-family:sans-serif;}' +
@@ -3873,31 +3877,79 @@ function printGantt(){
         'padding-bottom:6px;border-bottom:2px solid #000;margin-bottom:8px;}' +
       '.pg-hd-title{font-size:13pt;font-weight:900;color:#000;}' +
       '.pg-hd-date{font-size:7.5pt;color:#555;}' +
-      '</style></head><body>' +
-      bodyParts.join('') +
-      '<script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script>' +
-      '</body></html>';
+      '</style></head><body>' + bodyParts.join('') + '</body></html>';
 
-    var printWin = window.open('', '_blank');
-    if(printWin){
-      printWin.document.write(html);
-      printWin.document.close();
-      // フォールバック: onloadが発火しない場合
+    // 既存のiframeを削除
+    var oldIf = document.getElementById('_gantt_print_iframe');
+    if(oldIf) oldIf.parentNode.removeChild(oldIf);
+
+    // 非表示iframeを作成
+    var iframe = document.createElement('iframe');
+    iframe.id = '_gantt_print_iframe';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1200px;height:800px;border:none;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+
+    // iframeにコンテンツ書き込み
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(iframeHtml);
+    iframe.contentDocument.close();
+
+    // 画像ロード完了を待って印刷
+    var imgs = iframe.contentDocument.querySelectorAll('img');
+    var imgTotal = imgs.length;
+    var imgDone = 0;
+
+    function tryPrint(){
       setTimeout(function(){
-        if(printWin && !printWin.closed){
-          try{ printWin.focus(); printWin.print(); } catch(e){}
+        var printed = false;
+
+        // iOS Safari では iframe.contentWindow.print() が動く場合がある
+        try {
+          if(iframe.contentWindow && iframe.contentWindow.print){
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            printed = true;
+          }
+        } catch(e) { printed = false; }
+
+        // 失敗した場合: Blob URLを生成してaタグで開く
+        // （iOS Safariユーザーが手動で印刷できる）
+        if(!printed){
+          try {
+            var blob = new Blob([iframeHtml], {type: 'text/html;charset=utf-8'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.click();
+            setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+          } catch(e2) {
+            // 最終手段
+            window.print();
+          }
         }
-      }, 1500);
-    } else {
-      // ポップアップブロック時はfallback
-      showToast('ポップアップを許可してください', 'err');
+
+        // クリーンアップ
+        setTimeout(function(){
+          var f = document.getElementById('_gantt_print_iframe');
+          if(f) f.parentNode.removeChild(f);
+          poGantt.style.display='';
+          poGantt.innerHTML='';
+        }, 3000);
+      }, 400);
     }
 
-    // クリーンアップ
-    setTimeout(function(){
-      poGantt.style.display='';
-      poGantt.innerHTML='';
-    }, 500);
+    if(imgTotal === 0){
+      tryPrint();
+    } else {
+      imgs.forEach(function(img){
+        if(img.complete){ imgDone++; if(imgDone===imgTotal) tryPrint(); return; }
+        img.onload  = function(){ imgDone++; if(imgDone===imgTotal) tryPrint(); };
+        img.onerror = function(){ imgDone++; if(imgDone===imgTotal) tryPrint(); };
+      });
+      // 最大3秒でタイムアウト
+      setTimeout(function(){ if(imgDone < imgTotal) tryPrint(); }, 3000);
+    }
   }
 }
 
