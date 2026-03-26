@@ -3775,7 +3775,7 @@ function printGantt(){
     if(pi===0){
       var hd=document.createElement('div');
       hd.className='pg-hd';
-      hd.innerHTML='<div class="pg-hd-title">ガントチャート — 参考書スケジュール'+(window._appVersion?' <span style="font-size:8pt;font-weight:400;color:#555;font-family:\'DM Mono\',monospace;margin-left:8px;">'+window._appVersion+'</span>':'')+'</div>'+
+      hd.innerHTML='<div class="pg-hd-title">ガントチャート — 参考書スケジュール'+(window._appVersion?' <span style="font-size:8pt;font-weight:400;color:#555;margin-left:8px;">'+window._appVersion+'</span>':'')+'</div>'+
                    '<div class="pg-hd-date">出力日: '+today()+(pages.length>1?' （'+(pi+1)+'/'+pages.length+'ページ）':'')+'</div>';
       pageDiv.appendChild(hd);
     } else {
@@ -3786,9 +3786,9 @@ function printGantt(){
     }
 
     var svgDiv=document.createElement('div');
+    svgDiv.className='gantt-svg-container';
     svgDiv.style.cssText='width:100%;overflow:visible;';
     var pageSvg=makePrintPage(pg.rowStart, pg.rowCount);
-    // 印刷幅に合わせてSVGをスケール
     pageSvg.style.cssText='display:block;width:100%;height:auto;max-width:100%;';
     svgDiv.appendChild(pageSvg);
     pageDiv.appendChild(svgDiv);
@@ -3800,15 +3800,88 @@ function printGantt(){
   document.getElementById('po-sched').style.display='none';
   poGantt.style.display='block';
 
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
+  // 印刷スタイル挿入
+  var _gps = document.getElementById('_gantt_ps');
+  if(_gps) _gps.parentNode.removeChild(_gps);
+  var _gpsNew = document.createElement('style');
+  _gpsNew.id = '_gantt_ps';
+  _gpsNew.textContent = [
+    '@media print {',
+    '  @page { size: A4 landscape; margin: 8mm; }',
+    '  #po-gantt { width:100% !important; display:block !important; }',
+    '  .pg-hd { display:flex !important; align-items:center !important;',
+    '    justify-content:space-between !important;',
+    '    padding-bottom:6px !important; border-bottom:2px solid #000 !important;',
+    '    margin-bottom:8px !important; }',
+    '  .pg-hd-title { font-size:13pt !important; font-weight:900 !important; color:#000 !important; }',
+    '  .pg-hd-date  { font-size:7.5pt !important; color:#555 !important; }',
+    '  .gantt-print-page { break-before:auto; }',
+    '  .gantt-print-page + .gantt-print-page { break-before:page !important; page-break-before:always !important; }',
+    '  .gantt-print-page img { display:block !important; width:100% !important; height:auto !important;',
+    '    -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }',
+    '}'
+  ].join('\n');
+  document.head.appendChild(_gpsNew);
+
+  // 各ページSVGをcanvas→PNGに変換してimgに差し替える
+  var pageImgDivs = poGantt.querySelectorAll('.gantt-svg-container');
+  var total = pageImgDivs.length;
+  var done = 0;
+
+  function convertSvgToPng(svgEl, callback){
+    var W = parseInt(svgEl.getAttribute('width'));
+    var H = parseInt(svgEl.getAttribute('height'));
+    var svgStr = new XMLSerializer().serializeToString(svgEl);
+    var svgUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+    var DPR = 2;
+    var canvas = document.createElement('canvas');
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+    var img = new Image();
+    img.onload = function(){
+      ctx.drawImage(img, 0, 0, W, H);
+      callback(canvas.toDataURL('image/png'), W, H);
+    };
+    img.onerror = function(){ callback(null, W, H); };
+    img.src = svgUri;
+  }
+
+  if(total === 0){
+    setTimeout(function(){ window.print(); }, 300);
+    return;
+  }
+
+  pageImgDivs.forEach(function(container){
+    var svgEl = container.querySelector('svg');
+    if(!svgEl){ done++; if(done===total) doActualPrint(); return; }
+    convertSvgToPng(svgEl, function(pngUri, W, H){
+      if(pngUri){
+        var printImg = document.createElement('img');
+        printImg.src = pngUri;
+        printImg.setAttribute('width', W);
+        printImg.setAttribute('height', H);
+        printImg.style.cssText = 'display:block;width:100%;height:auto;aspect-ratio:'+W+'/'+H+
+          ';-webkit-print-color-adjust:exact;print-color-adjust:exact;max-width:100%;';
+        container.innerHTML = '';
+        container.appendChild(printImg);
+      }
+      done++;
+      if(done === total) doActualPrint();
+    });
+  });
+
+  function doActualPrint(){
+    setTimeout(function(){
       window.print();
       setTimeout(function(){
         poGantt.style.display='';
         poGantt.innerHTML='';
-      },1500);
-    });
-  });
+        var _s = document.getElementById('_gantt_ps');
+        if(_s) _s.parentNode.removeChild(_s);
+      }, 1500);
+    }, 300);
+  }
 }
 
 function dateStr(d){
@@ -4346,19 +4419,12 @@ hookSchedSave();
     if(e.key==='Enter')saveBook();
   });
 });
-// ===================== AUTO VERSION =====================
+// ===================== VERSION =====================
+var APP_VERSION = 'v1.2'; // ← バージョンアップ時にここだけ変更
 (function(){
-  var d = new Date();
-  var y = d.getFullYear();
-  var mo = String(d.getMonth()+1).padStart(2,'0');
-  var da = String(d.getDate()).padStart(2,'0');
-  var h  = String(d.getHours()).padStart(2,'0');
-  var mi = String(d.getMinutes()).padStart(2,'0');
-  var ver = y+'-'+mo+'-'+da+' '+h+':'+mi;
   var el = document.getElementById('app-version');
-  if(el) el.textContent = 'updated '+ver;
-  // ガントPDF印刷のタイトルにも反映
-  window._appVersion = ver;
+  if(el) el.textContent = APP_VERSION;
+  window._appVersion = APP_VERSION;
 })();
 
 // リサイズ時にガントを再描画
