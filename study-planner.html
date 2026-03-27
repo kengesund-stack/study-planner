@@ -242,8 +242,8 @@ body.gantt-active #pane-gantt{width:100%;}
 .bi-header{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
   padding:4px 0;}
 .bi-header:hover .bi-name{color:var(--gold);}
-.bi-collapse-icon{font-size:11px;color:var(--text3);transition:transform .2s;flex-shrink:0;
-  width:16px;text-align:center;}
+.bi-collapse-icon{font-size:16px;color:var(--text2);transition:transform .2s;flex-shrink:0;
+  width:22px;text-align:center;line-height:1;}
 .bi-collapse-icon.open{transform:rotate(0deg);}
 .bi-collapse-icon.closed{transform:rotate(-90deg);}
 .bi-detail{overflow:hidden;transition:max-height .28s ease,opacity .22s ease;}
@@ -321,7 +321,7 @@ body.gantt-active #pane-gantt{width:100%;}
   #print-overlay *{ color:#000!important; }
 
   @page{ size:A4;margin:20mm 12mm 15mm 12mm; }          /* 上20 右12 下15 左12 */
-  @page landscape{ size:A4 landscape;margin:18mm 10mm 12mm 10mm; } /* 上18 右10 下12 左10 */
+  @page landscape{ size:A4 landscape;margin:6mm 5mm 6mm 5mm; } /* 最小余白 */
   .landscape-page{ page:landscape; }
 
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
@@ -1656,6 +1656,7 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 // ===================== LIST STATE =====================
 var _listSort = 'date';       // date|subject|name|norma|days
 var _bookCollapse = {};       // id -> true(collapsed)
+var _bookExpanded = {};       // id -> true(explicitly opened)
 
 function setListSort(key){
   _listSort = key;
@@ -1674,7 +1675,7 @@ function clearListSearch(){
 }
 
 function expandAllBooks(){
-  books.forEach(function(b){ delete _bookCollapse[b.id]; });
+  books.forEach(function(b){ _bookExpanded[b.id]=true; delete _bookCollapse[b.id]; });
   document.querySelectorAll('.bi-detail').forEach(function(d){
     d.classList.remove('collapsed'); d.classList.add('expanded');
     d.style.maxHeight = d.scrollHeight + 'px';
@@ -1685,7 +1686,7 @@ function expandAllBooks(){
 }
 
 function collapseAllBooks(){
-  books.forEach(function(b){ _bookCollapse[b.id]=true; });
+  books.forEach(function(b){ _bookCollapse[b.id]=true; delete _bookExpanded[b.id]; });
   document.querySelectorAll('.bi-detail').forEach(function(d){
     d.style.maxHeight = '0';
     d.classList.add('collapsed'); d.classList.remove('expanded');
@@ -1696,17 +1697,28 @@ function collapseAllBooks(){
 }
 
 function toggleBookCollapse(id){
-  if(_bookCollapse[id]){ delete _bookCollapse[id]; } else { _bookCollapse[id]=true; }
+  var isNowCollapsed = !_bookExpanded[id];  // 現在の状態
+  if(isNowCollapsed){
+    // 折りたたまれている → 展開する
+    _bookExpanded[id] = true;
+    delete _bookCollapse[id];
+  } else {
+    // 展開されている → 折りたたむ
+    delete _bookExpanded[id];
+    _bookCollapse[id] = true;
+  }
   var card = document.querySelector('.book-item[data-book-id="'+id+'"]');
   if(!card) return;
   var det = card.querySelector('.bi-detail');
   var ic  = card.querySelector('.bi-collapse-icon');
-  if(_bookCollapse[id]){
+  if(!_bookExpanded[id]){
+    // 折りたたむ
     det.style.maxHeight = det.scrollHeight+'px';
     requestAnimationFrame(function(){ det.style.maxHeight='0'; });
     det.classList.add('collapsed'); det.classList.remove('expanded');
     if(ic){ ic.classList.add('closed'); ic.classList.remove('open'); ic.textContent='▸'; }
   } else {
+    // 展開する
     det.classList.remove('collapsed'); det.classList.add('expanded');
     det.style.maxHeight = det.scrollHeight+'px';
     setTimeout(function(){ det.style.maxHeight='none'; }, 260);
@@ -1760,7 +1772,7 @@ function renderList(){
   filtered.forEach(function(b,i){
     var c=b.computed;
     var totalHr=Math.round(c.total*2/60);
-    var isCollapsed = !!_bookCollapse[b.id];
+    var isCollapsed = !_bookExpanded[b.id];  // デフォルト折りたたみ
     var div=document.createElement('div');
     div.className='book-item';
     div.setAttribute('data-book-id', b.id);
@@ -3809,25 +3821,25 @@ function printGantt(){
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
   // ---- 印刷用レイアウト定数（A4横サイズ向け、大きめ） ----
-  var LABEL_W  = 180;   // ラベル列幅
-  var ROW_H    = 26;    // 行の高さ
-  var BAR_H    = 16;    // バーの高さ
-  var BAR_Y_OFF= 5;     // バーのY offset
-  var HDR_MONTH_H = 18; // 月名行高さ
-  var HDR_TICK_H  = 14; // 目盛り行高さ
+  var LABEL_W  = 190;   // ラベル列幅
+  var ROW_H    = 34;    // 行の高さ（大きく）
+  var BAR_H    = 20;    // バーの高さ
+  var BAR_Y_OFF= 7;     // バーのY offset
+  var HDR_MONTH_H = 22; // 月名行高さ
+  var HDR_TICK_H  = 16; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
-  var PRINT_W  = 1122;  // A4横 96dpi相当 (297mm)
-  var PAGE_H   = 740;   // A4横 印刷可能高さ
-  var PG_HDR_H = 32;    // ページタイトル行高さ
+  var PRINT_W  = 1190;  // A4横 余白縮小分追加
+  var PAGE_H   = 820;   // A4横 印刷可能高さ（余白縮小で増加）
+  var PG_HDR_H = 30;    // ページタイトル行高さ
 
-  // フォントサイズ（コンパクト）
-  var FS_MONTH = 9;    // 月名
-  var FS_TICK  = 8;    // 目盛り
-  var FS_LABEL = 9;    // 参考書名
-  var FS_GROUP = 10;   // グループヘッダー
-  var FS_BAR   = 8;    // バー内テキスト
-  var FS_DAYS  = 8;    // 日数バッジ
-  var FS_TODAY = 8;    // 今日ラベル
+  // フォントサイズ（読みやすく大きく）
+  var FS_MONTH = 11;   // 月名
+  var FS_TICK  = 10;   // 目盛り
+  var FS_LABEL = 11;   // 参考書名
+  var FS_GROUP = 12;   // グループヘッダー
+  var FS_BAR   = 10;   // バー内テキスト
+  var FS_DAYS  = 9;    // 日数バッジ
+  var FS_TODAY = 10;   // 今日ラベル
 
   // 日付範囲
   var allDates=[];
@@ -3953,14 +3965,14 @@ function printGantt(){
       if(row.type==='header'){
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:'#e8e8e8'}));
         svg.appendChild(el('line',{x1:0,y1:ry,x2:SVG_W,y2:ry,stroke:'#bbb','stroke-width':'1'}));
-        svg.appendChild(el('rect',{x:6,y:ry+ROW_H/2-4,width:8,height:8,rx:2,fill:ganttColor(row.subject)}));
+        svg.appendChild(el('rect',{x:6,y:ry+ROW_H/2-5,width:10,height:10,rx:2,fill:ganttColor(row.subject)}));
         svg.appendChild(el('text',{x:18,y:ry+ROW_H/2+4,fill:'#222','font-size':FS_GROUP,'font-weight':'700','font-family':'Noto Sans JP,sans-serif'},row.subject));
       } else {
         var b=row.book, col=ganttColor(row.subject);
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
         // 参考書名
-        var nameText=b.name.length>18?b.name.slice(0,17)+'…':b.name;
+        var nameText=b.name.length>20?b.name.slice(0,19)+'…':b.name;
         svg.appendChild(el('text',{x:LABEL_W-8,y:ry+ROW_H/2+4,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameText));
         // バー
         var bx=xOf(b.startDate), bx2=xOf(b.endDate), bw=Math.max(8,bx2-bx), by2=ry+BAR_Y_OFF;
@@ -3976,17 +3988,21 @@ function printGantt(){
           svg.appendChild(el('line',{x1:p2x,y1:by2,x2:p2x,y2:by2+BAR_H,stroke:'#fff','stroke-width':'1.5'}));
           svg.appendChild(el('line',{x1:p3x,y1:by2,x2:p3x,y2:by2+BAR_H,stroke:'#fff','stroke-width':'1.5'}));
           [['①',bx,p1w],['②',p2x,p2w],['③',p3x,p3w]].forEach(function(pw){
-            if(pw[2]>24) svg.appendChild(el('text',{x:pw[1]+pw[2]/2,y:by2+BAR_H/2+1,'text-anchor':'middle','dominant-baseline':'middle',fill:'#fff','font-size':FS_BAR,'font-weight':'700'},pw[0]));
+            if(pw[2]>20) svg.appendChild(el('text',{x:pw[1]+pw[2]/2,y:by2+BAR_H/2+1,'text-anchor':'middle','dominant-baseline':'middle',fill:'#fff','font-size':FS_BAR,'font-weight':'900'},pw[0]));
           });
         } else {
           svg.appendChild(el('rect',{x:bx,y:by2,width:bw,height:BAR_H,rx:4,fill:col,opacity:'0.88'}));
         }
         // 日数・期間ラベル
-        if(bw>50){
-          svg.appendChild(el('text',{x:bx+bw-6,y:ry+ROW_H/2+1,'text-anchor':'end','dominant-baseline':'middle',fill:'rgba(0,0,0,0.5)','font-size':FS_DAYS,'font-family':'DM Mono,monospace'},b.days+'日'));
+        if(bw>40){
+          svg.appendChild(el('text',{x:bx+bw/2,y:ry+ROW_H/2+1,'text-anchor':'middle','dominant-baseline':'middle',fill:'rgba(255,255,255,0.85)','font-size':FS_DAYS,'font-family':'DM Mono,monospace','font-weight':'700'},b.days+'日'));
         }
         // 開始日ラベル（バー左上）
-        svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#555','font-size':'9','font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
+        svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#555','font-size':FS_DAYS,'font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
+        // 終了日ラベル（バー右上）
+        if(bw > 60){
+          svg.appendChild(el('text',{x:bx+bw-3,y:by2-2,'text-anchor':'end',fill:'#777','font-size':FS_DAYS,'font-family':'DM Mono,monospace'},'〜'+b.endDate.slice(5).replace('-','/')));
+        }
       }
     });
 
@@ -4093,12 +4109,12 @@ function printGantt(){
     });
 
     var iframeHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
-      '@page{size:A4 landscape;margin:8mm;}' +
+      '@page{size:A4 landscape;margin:5mm;}' +
       '*{box-sizing:border-box;margin:0;padding:0;}' +
       'body{background:#fff;font-family:sans-serif;}' +
       '.pg-hd{display:flex;align-items:center;justify-content:space-between;' +
         'padding-bottom:6px;border-bottom:2px solid #000;margin-bottom:8px;}' +
-      '.pg-hd-title{font-size:13pt;font-weight:900;color:#000;}' +
+      '.pg-hd-title{font-size:14pt;font-weight:900;color:#000;}' +
       '.pg-hd-date{font-size:7.5pt;color:#555;}' +
       '</style></head><body>' + bodyParts.join('') + '</body></html>';
 
