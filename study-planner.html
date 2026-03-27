@@ -216,6 +216,78 @@ body.gantt-active #pane-gantt{width:100%;}
 .ba-btn:hover{border-color:#444;color:#bbb;}
 .ba-btn.del:hover{border-color:#cc4444;color:#cc4444;background:#1a0000;}
 
+
+/* ===================== LIST SEARCH & COLLAPSE ===================== */
+.list-search-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  background:var(--bg-input);border:1px solid var(--border-input);border-radius:10px;
+  padding:8px 14px;}
+.list-search-bar input{flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:13px;}
+.list-search-bar input::placeholder{color:var(--text4);}
+.list-search-icon{color:var(--text3);font-size:14px;flex-shrink:0;}
+.list-search-clear{background:transparent;border:none;color:var(--text3);font-size:14px;
+  cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+.list-search-clear:hover{color:var(--text);}
+.list-sort-bar{display:flex;align-items:center;gap:6px;margin-bottom:14px;
+  overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
+.list-sort-bar::-webkit-scrollbar{display:none;}
+.list-sort-btn{background:transparent;border:1px solid var(--border);border-radius:8px;
+  padding:5px 12px;font-family:'Noto Sans JP',sans-serif;font-size:11px;color:var(--text3);
+  cursor:pointer;transition:all .15s;white-space:nowrap;}
+.list-sort-btn:hover{border-color:#444;color:#aaa;}
+.list-sort-btn.active{background:var(--surface);border-color:var(--gold);color:var(--gold);}
+.list-no-results{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;}
+/* 折りたたみ */
+.book-item{cursor:default;}
+.bi-header{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+  padding:4px 0;}
+.bi-header:hover .bi-name{color:var(--gold);}
+.bi-collapse-icon{font-size:11px;color:var(--text3);transition:transform .2s;flex-shrink:0;
+  width:16px;text-align:center;}
+.bi-collapse-icon.open{transform:rotate(0deg);}
+.bi-collapse-icon.closed{transform:rotate(-90deg);}
+.bi-detail{overflow:hidden;transition:max-height .28s ease,opacity .22s ease;}
+.bi-detail.collapsed{max-height:0!important;opacity:0;pointer-events:none;}
+.bi-detail.expanded{opacity:1;overflow:visible;}
+
+/* ===================== BOOK TEMPLATE MODAL ===================== */
+.btpl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:8300;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.btpl-box{background:#1a1a1a;border:1px solid #333;border-radius:16px;
+  padding:22px;width:420px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.btpl-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
+  color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+.btpl-heading{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px;}
+.btpl-search{display:flex;align-items:center;gap:8px;background:#111;border:1px solid #333;
+  border-radius:8px;padding:8px 12px;margin-bottom:12px;}
+.btpl-search input{flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:13px;font-family:'Noto Sans JP',sans-serif;}
+.btpl-search input::placeholder{color:var(--text4);}
+.btpl-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.btpl-list::-webkit-scrollbar{width:4px;}
+.btpl-list::-webkit-scrollbar-thumb{background:#333;border-radius:2px;}
+.btpl-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:#111;border:1px solid #222;border-radius:10px;cursor:pointer;transition:all .15s;}
+.btpl-item:hover{border-color:#444;background:#161616;}
+.btpl-item-body{flex:1;min-width:0;}
+.btpl-item-name{font-size:13px;font-weight:600;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.btpl-item-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+.btpl-item-load{background:var(--gold);border:none;border-radius:6px;padding:5px 10px;
+  color:#0d0d0d;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.btpl-item-load:hover{background:var(--gold2);}
+.btpl-empty{text-align:center;padding:32px 0;color:var(--text3);font-size:12px;}
+.btpl-cancel{background:transparent;border:1px solid #333;border-radius:10px;padding:10px;
+  color:var(--text3);font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;width:100%;}
+.btpl-cancel:hover{border-color:#555;color:#aaa;}
+/* テンプレートボタン（追加フォーム内） */
+.btn-tpl{background:#1a1a00;border:1px solid #3a3000;border-radius:10px;padding:10px 14px;
+  color:var(--gold);font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .2s;width:100%;margin-bottom:10px;display:flex;
+  align-items:center;justify-content:center;gap:6px;}
+.btn-tpl:hover{background:#222200;border-color:#5a4800;}
+
 /* ===================== SHOW/HIDE ===================== */
 .gone{display:none;}
 
@@ -925,6 +997,7 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
         <label>参考書名</label>
         <input type="text" id="bookname" placeholder="例: 数学IA 基礎問題精講">
       </div>
+      <button class="btn-tpl" onclick="openBtplModal()">📚 登録履歴から呼び出す</button>
       <div class="row3">
         <div class="ig">
           <label>問題数</label>
@@ -1043,15 +1116,48 @@ body{padding:24px 20px 100px;overflow-x:hidden;}
   <div id="pane-list" class="gone">
     <div class="list-header">
       <div class="list-count" id="list-count">0 冊登録済み</div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-pdf-all" onclick="doPrintAll()">📋 一覧をPDF出力</button>
         <button class="btn-pdf-all" onclick="doPrintAllSingle()" style="background:#fff;border:1px solid #ccc;color:#333;">📄 全冊を個別PDF出力</button>
       </div>
     </div>
-    <!-- エクスポート・インポートは設定タブに移動 -->
+    <!-- 検索バー -->
+    <div class="list-search-bar">
+      <span class="list-search-icon">🔍</span>
+      <input type="text" id="list-search-input" placeholder="参考書名・科目で絞り込み…"
+        oninput="renderList()" autocomplete="off">
+      <button class="list-search-clear" id="list-search-clear" onclick="clearListSearch()" style="display:none;">✕</button>
+    </div>
+    <!-- ソート -->
+    <div class="list-sort-bar">
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap;">並び替え：</span>
+      <button class="list-sort-btn active" id="sort-date" onclick="setListSort('date')">開始日順</button>
+      <button class="list-sort-btn" id="sort-subject" onclick="setListSort('subject')">科目順</button>
+      <button class="list-sort-btn" id="sort-name" onclick="setListSort('name')">名前順</button>
+      <button class="list-sort-btn" id="sort-norma" onclick="setListSort('norma')">ノルマ順</button>
+      <button class="list-sort-btn" id="sort-days" onclick="setListSort('days')">日数順</button>
+      <span style="flex:1;"></span>
+      <button class="list-sort-btn" id="btn-expand-all" onclick="expandAllBooks()">全て展開</button>
+      <button class="list-sort-btn" id="btn-collapse-all" onclick="collapseAllBooks()">全て折りたたむ</button>
+    </div>
     <div id="book-list"></div>
   </div>
   <div class="io-toast" id="io-toast"></div>
+
+  <!-- ===== BOOK TEMPLATE MODAL ===== -->
+  <div id="btpl-modal" class="btpl-overlay" style="display:none;" onclick="if(event.target===this)closeBtplModal()">
+    <div class="btpl-box">
+      <div class="btpl-title">登録履歴</div>
+      <div class="btpl-heading">📚 参考書を呼び出す</div>
+      <div class="btpl-search">
+        <span style="color:var(--text3);">🔍</span>
+        <input type="text" id="btpl-search" placeholder="参考書名・科目で絞り込み…"
+          oninput="renderBtplList()" autocomplete="off">
+      </div>
+      <div class="btpl-list" id="btpl-list"></div>
+      <button class="btpl-cancel" onclick="closeBtplModal()">キャンセル</button>
+    </div>
+  </div>
 
   <!-- ===== TAB SCHEDULE ===== -->
   <div id="pane-sched" class="gone">
@@ -1473,6 +1579,7 @@ function saveBook(){
     books.push(book);
   }
   saveBooks();
+  saveBookTemplate(book);  // テンプレート履歴に保存
   currentBook=book;
   showResult(book);
   resetEditState();
@@ -1546,71 +1653,183 @@ function resetForm(){
 // ===================== LIST =====================
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// ===================== LIST STATE =====================
+var _listSort = 'date';       // date|subject|name|norma|days
+var _bookCollapse = {};       // id -> true(collapsed)
+
+function setListSort(key){
+  _listSort = key;
+  document.querySelectorAll('.list-sort-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('sort-'+key);
+  if(btn) btn.classList.add('active');
+  renderList();
+}
+
+function clearListSearch(){
+  var inp = document.getElementById('list-search-input');
+  if(inp){ inp.value=''; }
+  var clr = document.getElementById('list-search-clear');
+  if(clr) clr.style.display='none';
+  renderList();
+}
+
+function expandAllBooks(){
+  books.forEach(function(b){ delete _bookCollapse[b.id]; });
+  document.querySelectorAll('.bi-detail').forEach(function(d){
+    d.classList.remove('collapsed'); d.classList.add('expanded');
+    d.style.maxHeight = d.scrollHeight + 'px';
+  });
+  document.querySelectorAll('.bi-collapse-icon').forEach(function(ic){
+    ic.classList.remove('closed'); ic.classList.add('open'); ic.textContent='▾';
+  });
+}
+
+function collapseAllBooks(){
+  books.forEach(function(b){ _bookCollapse[b.id]=true; });
+  document.querySelectorAll('.bi-detail').forEach(function(d){
+    d.style.maxHeight = '0';
+    d.classList.add('collapsed'); d.classList.remove('expanded');
+  });
+  document.querySelectorAll('.bi-collapse-icon').forEach(function(ic){
+    ic.classList.add('closed'); ic.classList.remove('open'); ic.textContent='▸';
+  });
+}
+
+function toggleBookCollapse(id){
+  if(_bookCollapse[id]){ delete _bookCollapse[id]; } else { _bookCollapse[id]=true; }
+  var card = document.querySelector('.book-item[data-book-id="'+id+'"]');
+  if(!card) return;
+  var det = card.querySelector('.bi-detail');
+  var ic  = card.querySelector('.bi-collapse-icon');
+  if(_bookCollapse[id]){
+    det.style.maxHeight = det.scrollHeight+'px';
+    requestAnimationFrame(function(){ det.style.maxHeight='0'; });
+    det.classList.add('collapsed'); det.classList.remove('expanded');
+    if(ic){ ic.classList.add('closed'); ic.classList.remove('open'); ic.textContent='▸'; }
+  } else {
+    det.classList.remove('collapsed'); det.classList.add('expanded');
+    det.style.maxHeight = det.scrollHeight+'px';
+    setTimeout(function(){ det.style.maxHeight='none'; }, 260);
+    if(ic){ ic.classList.remove('closed'); ic.classList.add('open'); ic.textContent='▾'; }
+  }
+}
+
 function renderList(){
-  var sorted=books.slice().sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
-  document.getElementById('list-count').textContent=sorted.length+'冊登録済み';
+  // 検索ワード
+  var q = (document.getElementById('list-search-input')||{value:''}).value.trim().toLowerCase();
+  var clr = document.getElementById('list-search-clear');
+  if(clr) clr.style.display = q ? 'block' : 'none';
+
+  // ソート
+  var sorted = books.slice();
+  if(_listSort==='date'){
+    sorted.sort(function(a,b){ return new Date(a.startDate)-new Date(b.startDate); });
+  } else if(_listSort==='subject'){
+    sorted.sort(function(a,b){
+      return subjectSortKey(a.subject||'')-subjectSortKey(b.subject||'') ||
+        (a.subject||'').localeCompare(b.subject||'','ja') ||
+        new Date(a.startDate)-new Date(b.startDate);
+    });
+  } else if(_listSort==='name'){
+    sorted.sort(function(a,b){ return a.name.localeCompare(b.name,'ja'); });
+  } else if(_listSort==='norma'){
+    sorted.sort(function(a,b){ return b.computed.perDay - a.computed.perDay; });
+  } else if(_listSort==='days'){
+    sorted.sort(function(a,b){ return b.days - a.days; });
+  }
+
+  // フィルター
+  var filtered = q ? sorted.filter(function(b){
+    return b.name.toLowerCase().indexOf(q)>=0 || (b.subject||'').toLowerCase().indexOf(q)>=0;
+  }) : sorted;
+
+  document.getElementById('list-count').textContent =
+    sorted.length+'冊登録済み' + (filtered.length<sorted.length ? '（'+filtered.length+'件表示）' : '');
+
   var el=document.getElementById('book-list');
   if(sorted.length===0){
     el.innerHTML='<div class="empty-state"><div class="icon">📭</div><p>まだ参考書が登録されていません。</p></div>';
     return;
   }
+  if(filtered.length===0){
+    el.innerHTML='<div class="list-no-results">🔍 「'+esc(q)+'」に一致する参考書はありません</div>';
+    return;
+  }
+
   el.innerHTML='';
-  sorted.forEach(function(b,i){
+  filtered.forEach(function(b,i){
     var c=b.computed;
     var totalHr=Math.round(c.total*2/60);
+    var isCollapsed = !!_bookCollapse[b.id];
     var div=document.createElement('div');
     div.className='book-item';
     div.setAttribute('data-book-id', b.id);
-    div.innerHTML=
-      '<div class="bi-top">'+
-        '<div class="bi-timeline">'+
+
+    // ---- ヘッダー（常時表示） ----
+    var headerHtml =
+      '<div class="bi-header" onclick="toggleBookCollapse(\''+b.id+'\')" title="クリックで折りたたみ">'+
+        '<div class="bi-timeline" style="flex-shrink:0;padding-top:0;">'+
           '<div class="bi-dot"></div>'+
-          (i<sorted.length-1?'<div class="bi-line"></div>':'')+
         '</div>'+
-        '<div class="bi-body">'+
-          '<div class="bi-idx">No.'+(i+1)+'</div>'+
-          (b.subject?'<div class="bi-subject">'+esc(b.subject)+'</div>':'')+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'+
+            '<div class="bi-idx" style="margin-bottom:0;">No.'+(i+1)+'</div>'+
+            (b.subject?'<div class="bi-subject" style="margin-bottom:0;">'+esc(b.subject)+'</div>':'')+
+          '</div>'+
           '<div class="bi-name">'+esc(b.name)+'</div>'+
-          '<div class="bi-dates">📅 '+fmtDate(b.startDate)+' 〜 '+fmtDate(b.endDate)+'<span class="bi-days-badge">'+b.days+'日間</span></div>'+
-          '<div class="bi-hero-row">'+
-            '<div class="bi-hero-box">'+
-              '<div class="bi-hero-label">1日ノルマ</div>'+
-              '<div class="bi-hero-num">'+c.perDay+'</div>'+
-              '<div class="bi-hero-unit">題/日</div>'+
-            '</div>'+
-            '<div class="bi-stats-grid">'+
-              '<div class="bi-stat"><div class="bi-stat-l">問題数</div><div class="bi-stat-v">'+b.q+'<span>題</span></div></div>'+
-              '<div class="bi-stat"><div class="bi-stat-l">反復回数</div><div class="bi-stat-v">'+b.rep+'<span>回</span></div></div>'+
-              '<div class="bi-stat"><div class="bi-stat-l">総問題数</div><div class="bi-stat-v">'+c.total.toLocaleString()+'<span>問</span></div></div>'+
-              '<div class="bi-stat"><div class="bi-stat-l">推定時間</div><div class="bi-stat-v">'+totalHr+'<span>h</span></div></div>'+
-              (b.dailyMin?'<div class="bi-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+ 
-            '</div>'+
+          '<div class="bi-dates">📅 '+fmtDate(b.startDate)+' 〜 '+fmtDate(b.endDate)+
+            '<span class="bi-days-badge">'+b.days+'日間</span>'+
+            '<span class="bi-days-badge" style="background:#1a1a00;color:var(--gold);border:1px solid #3a3000;">'+c.perDay+'題/日</span>'+
           '</div>'+
-          '<div class="bi-phases">'+
-            '<div class="bi-phase-title">📈 フェーズ計画</div>'+
-            '<div class="bi-phase-row">'+
-              '<div class="bi-phase-num">①</div>'+
-              '<div class="bi-phase-info"><div class="bi-phase-name">ウォームアップ期</div><div class="bi-phase-period">1日目 〜 '+c.p1End+'日目（'+c.p1End+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p1+'<span>題/日</span></div>'+
-            '</div>'+
-            '<div class="bi-phase-row">'+
-              '<div class="bi-phase-num">②</div>'+
-              '<div class="bi-phase-info"><div class="bi-phase-name">加速期</div><div class="bi-phase-period">'+(c.p1End+1)+'日目 〜 '+c.p2End+'日目（'+(c.p2End-c.p1End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.p2+'<span>題/日</span></div>'+
-            '</div>'+
-            '<div class="bi-phase-row">'+
-              '<div class="bi-phase-num">③</div>'+
-              '<div class="bi-phase-info"><div class="bi-phase-name">完走期</div><div class="bi-phase-period">'+(c.p2End+1)+'日目 〜 '+b.days+'日目（'+(b.days-c.p2End)+'日間）</div></div>'+
-              '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span></div>'+
-            '</div>'+
+        '</div>'+
+        '<span class="bi-collapse-icon '+(isCollapsed?'closed':'open')+'">'+(isCollapsed?'▸':'▾')+'</span>'+
+      '</div>';
+
+    // ---- 詳細（折りたたみ対象） ----
+    var detailHtml =
+      '<div class="bi-detail '+(isCollapsed?'collapsed':'expanded')+'" style="'+(isCollapsed?'max-height:0;opacity:0;':'')+'">'+
+        '<div style="padding-top:10px;">'+
+        '<div class="bi-hero-row">'+
+          '<div class="bi-hero-box">'+
+            '<div class="bi-hero-label">1日ノルマ</div>'+
+            '<div class="bi-hero-num">'+c.perDay+'</div>'+
+            '<div class="bi-hero-unit">題/日</div>'+
           '</div>'+
-          '<div class="bi-actions">'+
-            '<button class="ba-btn" onclick="editBook(\''+b.id+'\')">✏️ 編集</button>'+
-            '<button class="ba-btn" onclick="printBookById(\''+b.id+'\')">📄 PDF</button>'+
-            '<button class="ba-btn del" onclick="deleteBook(\''+b.id+'\')">🗑 削除</button>'+
+          '<div class="bi-stats-grid">'+
+            '<div class="bi-stat"><div class="bi-stat-l">問題数</div><div class="bi-stat-v">'+b.q+'<span>題</span></div></div>'+
+            '<div class="bi-stat"><div class="bi-stat-l">反復回数</div><div class="bi-stat-v">'+b.rep+'<span>回</span></div></div>'+
+            '<div class="bi-stat"><div class="bi-stat-l">総問題数</div><div class="bi-stat-v">'+c.total.toLocaleString()+'<span>問</span></div></div>'+
+            '<div class="bi-stat"><div class="bi-stat-l">推定時間</div><div class="bi-stat-v">'+totalHr+'<span>h</span></div></div>'+
+            (b.dailyMin?'<div class="bi-stat" style="grid-column:span 2;background:#1a1a00;border-color:#3a3000;"><div class="bi-stat-l">1日'+b.dailyMin+'分 → 1題あたり</div><div class="bi-stat-v" style="color:var(--gold)">① '+(b.dailyMin/c.p1).toFixed(1)+'分　② '+(b.dailyMin/c.p2).toFixed(1)+'分　③ '+(b.dailyMin/c.perDay).toFixed(1)+'分</div></div>':'')+
           '</div>'+
+        '</div>'+
+        '<div class="bi-phases">'+
+          '<div class="bi-phase-title">📈 フェーズ計画</div>'+
+          '<div class="bi-phase-row">'+
+            '<div class="bi-phase-num">①</div>'+
+            '<div class="bi-phase-info"><div class="bi-phase-name">ウォームアップ期</div><div class="bi-phase-period">1日目 〜 '+c.p1End+'日目（'+c.p1End+'日間）</div></div>'+
+            '<div class="bi-phase-val">'+c.p1+'<span>題/日</span></div>'+
+          '</div>'+
+          '<div class="bi-phase-row">'+
+            '<div class="bi-phase-num">②</div>'+
+            '<div class="bi-phase-info"><div class="bi-phase-name">加速期</div><div class="bi-phase-period">'+(c.p1End+1)+'日目 〜 '+c.p2End+'日目（'+(c.p2End-c.p1End)+'日間）</div></div>'+
+            '<div class="bi-phase-val">'+c.p2+'<span>題/日</span></div>'+
+          '</div>'+
+          '<div class="bi-phase-row">'+
+            '<div class="bi-phase-num">③</div>'+
+            '<div class="bi-phase-info"><div class="bi-phase-name">完走期</div><div class="bi-phase-period">'+(c.p2End+1)+'日目 〜 '+b.days+'日目（'+(b.days-c.p2End)+'日間）</div></div>'+
+            '<div class="bi-phase-val">'+c.perDay+'<span>題/日</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="bi-actions">'+
+          '<button class="ba-btn" onclick="editBook(\''+b.id+'\')">✏️ 編集</button>'+
+          '<button class="ba-btn" onclick="printBookById(\''+b.id+'\')">📄 PDF</button>'+
+          '<button class="ba-btn del" onclick="deleteBook(\''+b.id+'\')">🗑 削除</button>'+
+        '</div>'+
         '</div>'+
       '</div>';
+
+    div.innerHTML = headerHtml + detailHtml;
     el.appendChild(div);
   });
 }
@@ -1966,6 +2185,10 @@ function importData(e){
         }
       }
 
+      // テンプレート履歴にも追加
+      if(imported.length>0){
+        imported.forEach(function(b){ if(b.name) saveBookTemplate(b); });
+      }
       var msgs=[bookMsg,schedMsg].filter(Boolean);
       if(msgs.length===0){showToast('有効なデータが見つかりません','err');}
       else{showToast(msgs.join('・')+'しました ✓','ok');}
@@ -4471,6 +4694,111 @@ function loadThemeFromStorage(){
       el.classList.toggle('active', el.getAttribute('data-bg')===t.bg);
     });
   }catch(e){}
+}
+
+// ===================== BOOK TEMPLATES =====================
+// 過去に登録した参考書をテンプレートとして保存（名前+科目+問題数+反復+dailyMin）
+var BOOK_TEMPLATE_KEY = 'study_book_templates';
+
+function loadBookTemplates(){
+  try{ return JSON.parse(localStorage.getItem(BOOK_TEMPLATE_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function saveBookTemplate(book){
+  var templates = loadBookTemplates();
+  // 同名テンプレートは上書き
+  var idx = templates.findIndex(function(t){ return t.name===book.name && t.subject===book.subject; });
+  var tpl = {
+    name: book.name,
+    subject: book.subject||'',
+    q: book.q,
+    rep: book.rep,
+    dailyMin: book.dailyMin||0,
+    savedAt: new Date().toISOString()
+  };
+  if(idx>=0){ templates[idx]=tpl; } else { templates.unshift(tpl); }
+  // 最大100件
+  if(templates.length>100) templates=templates.slice(0,100);
+  try{ localStorage.setItem(BOOK_TEMPLATE_KEY, JSON.stringify(templates)); }catch(e){}
+}
+
+function openBtplModal(){
+  renderBtplList();
+  document.getElementById('btpl-modal').style.display='flex';
+  setTimeout(function(){
+    var inp=document.getElementById('btpl-search'); if(inp){inp.value='';inp.focus();}
+  },100);
+}
+function closeBtplModal(){
+  document.getElementById('btpl-modal').style.display='none';
+}
+
+function renderBtplList(){
+  var q=(document.getElementById('btpl-search')||{value:''}).value.trim().toLowerCase();
+  var templates=loadBookTemplates();
+  var filtered=q?templates.filter(function(t){
+    return t.name.toLowerCase().indexOf(q)>=0||(t.subject||'').toLowerCase().indexOf(q)>=0;
+  }):templates;
+  var el=document.getElementById('btpl-list');
+  if(!el) return;
+  if(templates.length===0){
+    el.innerHTML='<div class="btpl-empty">📭 まだ履歴がありません。<br>参考書を保存すると自動的に記録されます。</div>';
+    return;
+  }
+  if(filtered.length===0){
+    el.innerHTML='<div class="btpl-empty">🔍 「'+esc(q)+'」に一致する履歴はありません</div>';
+    return;
+  }
+  el.innerHTML='';
+  filtered.forEach(function(t){
+    var div=document.createElement('div');
+    div.className='btpl-item';
+    div.innerHTML=
+      '<div class="btpl-item-body">'+
+        (t.subject?'<div style="font-size:10px;color:var(--gold);margin-bottom:2px;">'+esc(t.subject)+'</div>':'')+
+        '<div class="btpl-item-name">'+esc(t.name)+'</div>'+
+        '<div class="btpl-item-sub">'+t.q+'題 × '+t.rep+'回'+(t.dailyMin?' ・ '+t.dailyMin+'分/日':'')+'</div>'+
+      '</div>'+
+      '<button class="btpl-item-load" onclick="loadBookTemplate(''+encodeURIComponent(JSON.stringify(t))+'')">読み込む</button>';
+    el.appendChild(div);
+  });
+}
+
+function loadBookTemplate(encoded){
+  try{
+    var t=JSON.parse(decodeURIComponent(encoded));
+    // 追加フォームに値をセット（日付・IDはクリア）
+    switchTab('add');
+    document.getElementById('bookname').value=t.name;
+    document.getElementById('questions').value=t.q;
+    document.getElementById('repeats').value=t.rep;
+    document.getElementById('daily-min').value=t.dailyMin||'';
+    document.getElementById('start-date').value='';
+    document.getElementById('end-date').value='';
+    document.getElementById('days-display').value='';
+    document.getElementById('edit-id').value='';
+    document.getElementById('save-btn').textContent='保存して計算 →';
+    document.getElementById('cancel-btn').style.display='none';
+    document.getElementById('result-wrap').classList.add('gone');
+    // 科目
+    var sel=document.getElementById('subject-select');
+    var sub=t.subject||'';
+    var found=false;
+    for(var i=0;i<sel.options.length;i++){
+      if(sel.options[i].value===sub){sel.selectedIndex=i;found=true;break;}
+    }
+    if(!found && sub){sel.value='__other__';document.getElementById('subject-custom').value=sub;}
+    else if(!sub){sel.value='';}
+    document.getElementById('subject-custom-wrap').style.display=(sel.value==='__other__')?'block':'none';
+    closeBtplModal();
+    // 日付入力欄にフォーカス
+    setTimeout(function(){
+      var sd=document.getElementById('start-date');
+      if(sd) sd.focus();
+    },200);
+    showToast('「'+t.name+'」を読み込みました ✓','ok');
+  }catch(e){ showToast('読み込みに失敗しました','err'); }
 }
 
 // ===================== INIT =====================
