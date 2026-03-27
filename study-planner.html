@@ -4754,20 +4754,35 @@ function renderBtplList(){
   filtered.forEach(function(t){
     var div=document.createElement('div');
     div.className='btpl-item';
-    div.innerHTML=
-      '<div class="btpl-item-body">'+
-        (t.subject?'<div style="font-size:10px;color:var(--gold);margin-bottom:2px;">'+esc(t.subject)+'</div>':'')+
-        '<div class="btpl-item-name">'+esc(t.name)+'</div>'+
-        '<div class="btpl-item-sub">'+t.q+'題 × '+t.rep+'回'+(t.dailyMin?' ・ '+t.dailyMin+'分/日':'')+'</div>'+
-      '</div>'+
-      '<button class="btpl-item-load" onclick="loadBookTemplate(''+encodeURIComponent(JSON.stringify(t))+'')">読み込む</button>';
+    var body=document.createElement('div');
+    body.className='btpl-item-body';
+    if(t.subject){
+      var subjEl=document.createElement('div');
+      subjEl.style.cssText='font-size:10px;color:var(--gold);margin-bottom:2px;';
+      subjEl.textContent=t.subject;
+      body.appendChild(subjEl);
+    }
+    var nameEl=document.createElement('div');
+    nameEl.className='btpl-item-name';
+    nameEl.textContent=t.name;
+    body.appendChild(nameEl);
+    var subEl=document.createElement('div');
+    subEl.className='btpl-item-sub';
+    subEl.textContent=t.q+'題 × '+t.rep+'回'+(t.dailyMin?' ・ '+t.dailyMin+'分/日':'');
+    body.appendChild(subEl);
+    var btn=document.createElement('button');
+    btn.className='btpl-item-load';
+    btn.textContent='読み込む';
+    (function(tpl){ btn.addEventListener('click', function(){ loadBookTemplate(tpl); }); })(t);
+    div.appendChild(body);
+    div.appendChild(btn);
     el.appendChild(div);
   });
 }
 
-function loadBookTemplate(encoded){
+function loadBookTemplate(tOrEncoded){
   try{
-    var t=JSON.parse(decodeURIComponent(encoded));
+    var t = (typeof tOrEncoded === 'object') ? tOrEncoded : JSON.parse(decodeURIComponent(tOrEncoded));
     // 追加フォームに値をセット（日付・IDはクリア）
     switchTab('add');
     document.getElementById('bookname').value=t.name;
