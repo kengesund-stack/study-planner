@@ -3809,25 +3809,25 @@ function printGantt(){
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
   // ---- 印刷用レイアウト定数（A4横サイズ向け、大きめ） ----
-  var LABEL_W  = 180;   // ラベル列幅
-  var ROW_H    = 26;    // 行の高さ
-  var BAR_H    = 16;    // バーの高さ
-  var BAR_Y_OFF= 5;     // バーのY offset
-  var HDR_MONTH_H = 18; // 月名行高さ
-  var HDR_TICK_H  = 14; // 目盛り行高さ
+  var LABEL_W  = 220;   // ラベル列幅
+  var ROW_H    = 38;    // 行の高さ
+  var BAR_H    = 22;    // バーの高さ
+  var BAR_Y_OFF= 8;     // バーのY offset
+  var HDR_MONTH_H = 26; // 月名行高さ
+  var HDR_TICK_H  = 20; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
   var PRINT_W  = 1122;  // A4横 96dpi相当 (297mm)
   var PAGE_H   = 740;   // A4横 印刷可能高さ
-  var PG_HDR_H = 32;    // ページタイトル行高さ
+  var PG_HDR_H = 40;    // ページタイトル行高さ
 
-  // フォントサイズ（コンパクト）
-  var FS_MONTH = 9;    // 月名
-  var FS_TICK  = 8;    // 目盛り
-  var FS_LABEL = 9;    // 参考書名
-  var FS_GROUP = 10;   // グループヘッダー
-  var FS_BAR   = 8;    // バー内テキスト
-  var FS_DAYS  = 8;    // 日数バッジ
-  var FS_TODAY = 8;    // 今日ラベル
+  // フォントサイズ（A4横で読みやすいサイズ）
+  var FS_MONTH = 13;   // 月名
+  var FS_TICK  = 11;   // 目盛り
+  var FS_LABEL = 12;   // 参考書名
+  var FS_GROUP = 13;   // グループヘッダー
+  var FS_BAR   = 11;   // バー内テキスト
+  var FS_DAYS  = 11;   // 日数バッジ
+  var FS_TODAY = 11;   // 今日ラベル
 
   // 日付範囲
   var allDates=[];
@@ -3960,7 +3960,7 @@ function printGantt(){
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
         // 参考書名
-        var nameText=b.name.length>18?b.name.slice(0,17)+'…':b.name;
+        var nameText=b.name.length>24?b.name.slice(0,23)+'…':b.name;
         svg.appendChild(el('text',{x:LABEL_W-8,y:ry+ROW_H/2+4,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameText));
         // バー
         var bx=xOf(b.startDate), bx2=xOf(b.endDate), bw=Math.max(8,bx2-bx), by2=ry+BAR_Y_OFF;
@@ -4098,8 +4098,8 @@ function printGantt(){
       'body{background:#fff;font-family:sans-serif;}' +
       '.pg-hd{display:flex;align-items:center;justify-content:space-between;' +
         'padding-bottom:6px;border-bottom:2px solid #000;margin-bottom:8px;}' +
-      '.pg-hd-title{font-size:13pt;font-weight:900;color:#000;}' +
-      '.pg-hd-date{font-size:7.5pt;color:#555;}' +
+      '.pg-hd-title{font-size:16pt;font-weight:900;color:#000;}' +
+      '.pg-hd-date{font-size:10pt;color:#555;}' +
       '</style></head><body>' + bodyParts.join('') + '</body></html>';
 
     // 既存のiframeを削除
