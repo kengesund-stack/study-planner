@@ -3808,26 +3808,27 @@ function printGantt(){
   var unit      = (document.getElementById('gantt-unit')||{value:'half'}).value;
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
-  // ---- 印刷用レイアウト定数（A4横サイズ向け、大きめ） ----
-  var LABEL_W  = 220;   // ラベル列幅
-  var ROW_H    = 38;    // 行の高さ
-  var BAR_H    = 22;    // バーの高さ
-  var BAR_Y_OFF= 8;     // バーのY offset
-  var HDR_MONTH_H = 26; // 月名行高さ
-  var HDR_TICK_H  = 20; // 目盛り行高さ
+  // ---- 印刷用レイアウト定数（A4横サイズ向け、読みやすいサイズ） ----
+  var LABEL_W  = 200;   // ラベル列幅
+  var ROW_H    = 30;    // 行の高さ
+  var BAR_H    = 18;    // バーの高さ
+  var BAR_Y_OFF= 6;     // バーのY offset
+  var HDR_MONTH_H = 24; // 月名行高さ
+  var HDR_TICK_H  = 18; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
-  var PRINT_W  = 1122;  // A4横 96dpi相当 (297mm)
-  var PAGE_H   = 740;   // A4横 印刷可能高さ
-  var PG_HDR_H = 40;    // ページタイトル行高さ
+  // A4横: ブラウザがURL/ページ番号を上下に追加するため実際の印刷可能領域は小さめ
+  var PRINT_W  = 1020;  // A4横 印刷可能幅（余白・ブラウザUIを除く）
+  var PAGE_H   = 600;   // A4横 実際の印刷可能高さ（ブラウザヘッダ/フッタ込み）
+  var PG_HDR_H = 36;    // ページタイトル行高さ
 
   // フォントサイズ（A4横で読みやすいサイズ）
-  var FS_MONTH = 13;   // 月名
-  var FS_TICK  = 11;   // 目盛り
-  var FS_LABEL = 12;   // 参考書名
-  var FS_GROUP = 13;   // グループヘッダー
-  var FS_BAR   = 11;   // バー内テキスト
-  var FS_DAYS  = 11;   // 日数バッジ
-  var FS_TODAY = 11;   // 今日ラベル
+  var FS_MONTH = 14;   // 月名
+  var FS_TICK  = 12;   // 目盛り
+  var FS_LABEL = 13;   // 参考書名
+  var FS_GROUP = 14;   // グループヘッダー
+  var FS_BAR   = 12;   // バー内テキスト
+  var FS_DAYS  = 12;   // 日数バッジ
+  var FS_TODAY = 12;   // 今日ラベル
 
   // 日付範囲
   var allDates=[];
@@ -3847,21 +3848,37 @@ function printGantt(){
   groupKeys.forEach(function(s){ rows.push({type:'header',subject:s}); grouped[s].forEach(function(b){rows.push({type:'book',subject:s,book:b});}); });
   var totalRows = rows.length;
 
-  var pxPerDay = unit==='day'?24:unit==='week'?12:unit==='half'?7:4;
-  var CHART_W  = Math.max(PRINT_W - LABEL_W, totalDays * pxPerDay);
+  var pxPerDay = unit==='day'?20:unit==='week'?10:unit==='half'?6:4;
+  // CHART_Wは実際の日数×pxPerDayとPRINT_W-LABEL_Wの大きい方（ただし上限を設けてスペース無駄を防ぐ）
+  var CHART_W  = Math.min(Math.max(PRINT_W - LABEL_W, totalDays * pxPerDay), totalDays * pxPerDay);
   var SVG_W    = LABEL_W + CHART_W;
 
-  // ページ分割
+  // ページ分割（グループヘッダーが最終行にならないよう調整）
   var rowsPerPage1 = Math.floor((PAGE_H - PG_HDR_H - HDR_H) / ROW_H);
   var rowsPerPageN = Math.floor((PAGE_H - HDR_H) / ROW_H);
+
+  // グループヘッダーが孤立（ページ末尾1行だけ）しないよう-1して余裕を持たせる
+  rowsPerPage1 = Math.max(1, rowsPerPage1 - 1);
+  rowsPerPageN = Math.max(1, rowsPerPageN - 1);
+
   var pages=[];
   var ri=0;
-  pages.push({rowStart:0, rowCount:Math.min(rowsPerPage1, totalRows)});
-  ri=pages[0].rowCount;
-  while(ri<totalRows){
-    var cn=Math.min(rowsPerPageN, totalRows-ri);
+  // ページ末尾がグループヘッダーで終わる場合は1行減らして次ページに送る
+  function calcPageEnd(start, maxRows){
+    var end = Math.min(start + maxRows, totalRows);
+    // 末尾がheaderなら1つ戻す
+    while(end > start + 1 && rows[end-1] && rows[end-1].type==='header'){
+      end--;
+    }
+    return end - start;
+  }
+  var cnt1 = calcPageEnd(0, rowsPerPage1);
+  pages.push({rowStart:0, rowCount:cnt1});
+  ri = cnt1;
+  while(ri < totalRows){
+    var cn = calcPageEnd(ri, rowsPerPageN);
     pages.push({rowStart:ri, rowCount:cn});
-    ri+=cn;
+    ri += cn;
   }
 
   function dayOff(d){ return Math.floor((new Date(d)-minDate)/86400000); }
@@ -3960,7 +3977,7 @@ function printGantt(){
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
         // 参考書名
-        var nameText=b.name.length>24?b.name.slice(0,23)+'…':b.name;
+        var nameText=b.name.length>20?b.name.slice(0,19)+'…':b.name;
         svg.appendChild(el('text',{x:LABEL_W-8,y:ry+ROW_H/2+4,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameText));
         // バー
         var bx=xOf(b.startDate), bx2=xOf(b.endDate), bw=Math.max(8,bx2-bx), by2=ry+BAR_Y_OFF;
@@ -3986,7 +4003,7 @@ function printGantt(){
           svg.appendChild(el('text',{x:bx+bw-6,y:ry+ROW_H/2+1,'text-anchor':'end','dominant-baseline':'middle',fill:'rgba(0,0,0,0.5)','font-size':FS_DAYS,'font-family':'DM Mono,monospace'},b.days+'日'));
         }
         // 開始日ラベル（バー左上）
-        svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#555','font-size':'9','font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
+        svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#555','font-size':FS_TICK,'font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
       }
     });
 
@@ -4093,9 +4110,9 @@ function printGantt(){
     });
 
     var iframeHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
-      '@page{size:A4 landscape;margin:8mm;}' +
+      '@page{size:A4 landscape;margin:6mm 6mm 6mm 6mm;}' +
       '*{box-sizing:border-box;margin:0;padding:0;}' +
-      'body{background:#fff;font-family:sans-serif;}' +
+      'body{background:#fff;font-family:"Noto Sans JP",sans-serif;}' +
       '.pg-hd{display:flex;align-items:center;justify-content:space-between;' +
         'padding-bottom:6px;border-bottom:2px solid #000;margin-bottom:8px;}' +
       '.pg-hd-title{font-size:16pt;font-weight:900;color:#000;}' +
