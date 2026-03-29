@@ -3831,26 +3831,25 @@ function printGantt(){
 
   // ---- 印刷用レイアウト定数（A4横サイズ向け、読みやすいサイズ） ----
   var LABEL_W  = 220;   // ラベル列幅
-  var ROW_H    = 44;    // 行の高さ（フェーズ日付ラベル込みで余裕を持たせる）
+  var ROW_H    = 52;    // 行の高さ（参考書名＋フェーズ日付ラベルが収まる余裕）
   var BAR_H    = 16;    // バーの高さ
-  var BAR_Y_OFF= 22;    // バーのY offset（名前2行分の下に配置）
+  var BAR_Y_OFF= 30;    // バーのY offset（名前2行＋フェーズ日付ラベルの下に配置）
   var HDR_MONTH_H = 28; // 月名行高さ
   var HDR_TICK_H  = 20; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
-  // A4横: ブラウザがURL/ページ番号を上下に追加するため実際の印刷可能領域は小さめ
-  var PRINT_W  = 1020;  // A4横 印刷可能幅（余白・ブラウザUIを除く）
-  var PAGE_H   = 700;   // A4横 実際の印刷可能高さ（余白込み）
-  var PG_HDR_H = 36;    // ページタイトル行高さ
+  var PRINT_W  = 1020;
+  var PAGE_H   = 700;
+  var PG_HDR_H = 36;
 
-  // フォントサイズ（A4横で読みやすいサイズ）
-  var FS_MONTH = 16;   // 月名
-  var FS_TICK  = 14;   // 目盛り
-  var FS_LABEL = 14;   // 参考書名
-  var FS_GROUP = 16;   // グループヘッダー
-  var FS_BAR   = 13;   // バー内テキスト
-  var FS_DAYS  = 12;   // 日数バッジ
-  var FS_TODAY = 13;   // 今日ラベル
-  var FS_PHASE_DATE = 10; // フェーズ日付ラベル
+  // フォントサイズ
+  var FS_MONTH = 16;
+  var FS_TICK  = 14;
+  var FS_LABEL = 14;
+  var FS_GROUP = 16;
+  var FS_BAR   = 13;
+  var FS_DAYS  = 12;
+  var FS_TODAY = 13;
+  var FS_PHASE_DATE = 10;
 
   // 日付範囲
   var allDates=[];
@@ -3998,8 +3997,8 @@ function printGantt(){
         var b=row.book, col=ganttColor(row.subject);
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
-        // 参考書名（長い場合は2行に折り返し。行高が小さいので行間をタイトに）
-        var MAX_CHARS = 13; // 1行あたりの最大文字数
+        // 参考書名（行の上部に配置。BAR_Y_OFF=30なのでバーより上に十分スペースあり）
+        var MAX_CHARS = 13;
         var nameLines;
         if(b.name.length <= MAX_CHARS){
           nameLines = [b.name];
@@ -4009,15 +4008,13 @@ function printGantt(){
           nameLines = [b.name.slice(0,MAX_CHARS), b.name.slice(MAX_CHARS, MAX_CHARS*2-1)+'…'];
         }
         if(nameLines.length === 1){
-          // 1行：行全体の垂直中央に配置
-          svg.appendChild(el('text',{x:LABEL_W-8,y:ry+ROW_H/2+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
+          // 1行：フェーズ日付ラベル(10px)とバーの間の領域中央
+          svg.appendChild(el('text',{x:LABEL_W-8,y:ry+10+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
         } else {
-          // 2行：行の上半分にコンパクトに収める（バーと被らないよう上寄せ）
-          var lineH2 = FS_LABEL + 1;
-          var totalTextH2 = lineH2 * 2;
-          var textY2 = ry + Math.max(2, (BAR_Y_OFF - totalTextH2) / 2) + FS_LABEL - 1;
+          // 2行：行の一番上から詰めて表示
+          var lineH2 = FS_LABEL + 2;
           nameLines.forEach(function(line, li){
-            svg.appendChild(el('text',{x:LABEL_W-8,y:textY2 + li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
+            svg.appendChild(el('text',{x:LABEL_W-8,y:ry+FS_LABEL+li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
           });
         }
         // バー
@@ -4041,29 +4038,25 @@ function printGantt(){
           [['①',bx,p1w],['②',p2x,p2w],['③',p3x,p3w]].forEach(function(pw){
             if(pw[2]>24) svg.appendChild(el('text',{x:pw[1]+pw[2]/2,y:by2+BAR_H/2+1,'text-anchor':'middle','dominant-baseline':'middle',fill:'#fff','font-size':FS_BAR,'font-weight':'700'},pw[0]));
           });
-          // フェーズ開始日・終了日ラベル（バー直下）
-          var labelY = by2+BAR_H+FS_PHASE_DATE+1;
-          // ①開始〜終了
+          // フェーズ開始日〜終了日ラベル（バーの真上）
+          var phaseLabelY = by2 - 3;
           var p1StartStr = addDaysPDF(b.startDate, 0);
           var p1EndStr   = addDaysPDF(b.startDate, c.p1End-1);
-          if(p1w > 28) svg.appendChild(el('text',{x:bx+p1w/2,y:labelY,'text-anchor':'middle',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p1StartStr+'〜'+p1EndStr));
-          // ②開始〜終了
+          if(p1w > 36) svg.appendChild(el('text',{x:bx+p1w/2,y:phaseLabelY,'text-anchor':'middle','dominant-baseline':'auto',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p1StartStr+'〜'+p1EndStr));
           var p2StartStr = addDaysPDF(b.startDate, c.p1End);
           var p2EndStr   = addDaysPDF(b.startDate, c.p2End-1);
-          if(p2w > 28) svg.appendChild(el('text',{x:p2x+p2w/2,y:labelY,'text-anchor':'middle',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p2StartStr+'〜'+p2EndStr));
-          // ③開始〜終了
+          if(p2w > 36) svg.appendChild(el('text',{x:p2x+p2w/2,y:phaseLabelY,'text-anchor':'middle','dominant-baseline':'auto',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p2StartStr+'〜'+p2EndStr));
           var p3StartStr = addDaysPDF(b.startDate, c.p2End);
           var p3EndStr   = addDaysPDF(b.startDate, b.days-1);
-          if(p3w > 28) svg.appendChild(el('text',{x:p3x+p3w/2,y:labelY,'text-anchor':'middle',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p3StartStr+'〜'+p3EndStr));
+          if(p3w > 36) svg.appendChild(el('text',{x:p3x+p3w/2,y:phaseLabelY,'text-anchor':'middle','dominant-baseline':'auto',fill:'#555','font-size':FS_PHASE_DATE,'font-family':'DM Mono,monospace'},p3StartStr+'〜'+p3EndStr));
         } else {
           svg.appendChild(el('rect',{x:bx,y:by2,width:bw,height:BAR_H,rx:4,fill:col,opacity:'0.88'}));
         }
-        // 日数・期間ラベル（バー内右端）
+        // 日数ラベル（バー内右端）
         if(bw>50){
           svg.appendChild(el('text',{x:bx+bw-6,y:by2+BAR_H/2+1,'text-anchor':'end','dominant-baseline':'middle',fill:'rgba(0,0,0,0.5)','font-size':FS_DAYS,'font-family':'DM Mono,monospace'},b.days+'日'));
         }
-        // 開始日ラベル（バー左上）
-        svg.appendChild(el('text',{x:bx+3,y:by2-2,fill:'#555','font-size':FS_TICK,'font-family':'DM Mono,monospace'},b.startDate.slice(5).replace('-','/')));
+        // ※バー左上の開始日ラベルは削除（フェーズ日付ラベルに置き換え）
       }
     });
 
