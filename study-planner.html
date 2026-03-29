@@ -3810,15 +3810,15 @@ function printGantt(){
 
   // ---- 印刷用レイアウト定数（A4横サイズ向け、読みやすいサイズ） ----
   var LABEL_W  = 220;   // ラベル列幅
-  var ROW_H    = 46;    // 行の高さ（参考書名2行対応で大きめ）
-  var BAR_H    = 20;    // バーの高さ
-  var BAR_Y_OFF= 24;    // バーのY offset（名前2行分の下に配置）
-  var HDR_MONTH_H = 28; // 月名行高さ
-  var HDR_TICK_H  = 20; // 目盛り行高さ
+  var ROW_H    = 36;    // 行の高さ（2行名前対応しつつ詰める）
+  var BAR_H    = 14;    // バーの高さ
+  var BAR_Y_OFF= 20;    // バーのY offset（名前2行分の下に配置）
+  var HDR_MONTH_H = 26; // 月名行高さ
+  var HDR_TICK_H  = 18; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
   // A4横: ブラウザがURL/ページ番号を上下に追加するため実際の印刷可能領域は小さめ
   var PRINT_W  = 1020;  // A4横 印刷可能幅（余白・ブラウザUIを除く）
-  var PAGE_H   = 600;   // A4横 実際の印刷可能高さ（ブラウザヘッダ/フッタ込み）
+  var PAGE_H   = 700;   // A4横 実際の印刷可能高さ（余白込み）
   var PG_HDR_H = 36;    // ページタイトル行高さ
 
   // フォントサイズ（A4横で読みやすいサイズ）
@@ -3976,7 +3976,7 @@ function printGantt(){
         var b=row.book, col=ganttColor(row.subject);
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
-        // 参考書名（長い場合は2行に折り返し、他の要素と被らないようROW_H上部に配置）
+        // 参考書名（長い場合は2行に折り返し。行高が小さいので行間をタイトに）
         var MAX_CHARS = 13; // 1行あたりの最大文字数
         var nameLines;
         if(b.name.length <= MAX_CHARS){
@@ -3987,15 +3987,15 @@ function printGantt(){
           nameLines = [b.name.slice(0,MAX_CHARS), b.name.slice(MAX_CHARS, MAX_CHARS*2-1)+'…'];
         }
         if(nameLines.length === 1){
-          // 1行：バーの上の領域中央に配置
-          svg.appendChild(el('text',{x:LABEL_W-8,y:ry+BAR_Y_OFF/2+4,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
+          // 1行：行全体の垂直中央に配置
+          svg.appendChild(el('text',{x:LABEL_W-8,y:ry+ROW_H/2+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
         } else {
-          // 2行：バーの上に上下に並べて配置
-          var lineH = FS_LABEL + 2;
-          var totalTextH = lineH * 2;
-          var textY = ry + (BAR_Y_OFF - totalTextH) / 2 + FS_LABEL;
+          // 2行：行の上半分にコンパクトに収める（バーと被らないよう上寄せ）
+          var lineH2 = FS_LABEL + 1;
+          var totalTextH2 = lineH2 * 2;
+          var textY2 = ry + Math.max(2, (BAR_Y_OFF - totalTextH2) / 2) + FS_LABEL - 1;
           nameLines.forEach(function(line, li){
-            svg.appendChild(el('text',{x:LABEL_W-8,y:textY + li*lineH,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
+            svg.appendChild(el('text',{x:LABEL_W-8,y:textY2 + li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
           });
         }
         // バー
