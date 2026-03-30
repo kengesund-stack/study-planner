@@ -3829,27 +3829,32 @@ function printGantt(){
   var unit      = (document.getElementById('gantt-unit')||{value:'half'}).value;
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
-  // ---- 印刷用レイアウト定数（A4横サイズ向け、読みやすいサイズ） ----
-  var LABEL_W  = 200;   // ラベル列幅
-  var ROW_H    = 42;    // 行の高さ（コンパクト化）
-  var BAR_H    = 14;    // バーの高さ
-  var BAR_Y_OFF= 24;    // バーのY offset
-  var HDR_MONTH_H = 26; // 月名行高さ
-  var HDR_TICK_H  = 18; // 目盛り行高さ
+  // ---- 印刷用レイアウト定数 ----
+  // A4横: 297x210mm, margin 5mm四辺 -> 印刷領域 287x200mm
+  // SVG幅1130px基準で高さ = 1130 * (200/287) ≈ 787px
+  // 1ページ目: ヘッダー(pg-hd)約38px分をSVG外で消費
+  var LABEL_W  = 190;
+  var ROW_H    = 34;
+  var BAR_H    = 12;
+  var BAR_Y_OFF= 20;
+  var HDR_MONTH_H = 22;
+  var HDR_TICK_H  = 16;
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
-  var PRINT_W  = 1020;
-  var PAGE_H   = 700;
-  var PG_HDR_H = 36;
+  var PRINT_W  = 1130;
+  var PAGE_H_1 = 787 - 42;  // 1ページ目（ヘッダー分を引く）
+  var PAGE_H_N = 787;        // 2ページ目以降
+  var PAGE_H   = PAGE_H_1;   // 後方互換のため残す（未使用）
+  var PG_HDR_H = 42;
 
   // フォントサイズ
-  var FS_MONTH = 17;
-  var FS_TICK  = 14;
-  var FS_LABEL = 15;
-  var FS_GROUP = 17;
-  var FS_BAR   = 14;
-  var FS_DAYS  = 13;
-  var FS_TODAY = 14;
-  var FS_PHASE_DATE = 11;
+  var FS_MONTH = 16;
+  var FS_TICK  = 13;
+  var FS_LABEL = 14;
+  var FS_GROUP = 15;
+  var FS_BAR   = 12;
+  var FS_DAYS  = 11;
+  var FS_TODAY = 13;
+  var FS_PHASE_DATE = 10;
 
   // 日付範囲：3月1日〜翌2月末に固定
   var allDates=[];
@@ -3877,9 +3882,9 @@ function printGantt(){
   var CHART_W  = Math.min(Math.max(PRINT_W - LABEL_W, totalDays * pxPerDay), totalDays * pxPerDay);
   var SVG_W    = LABEL_W + CHART_W;
 
-  // ページ分割（グループヘッダーが最終行にならないよう調整）
-  var rowsPerPage1 = Math.floor((PAGE_H - PG_HDR_H - HDR_H) / ROW_H);
-  var rowsPerPageN = Math.floor((PAGE_H - HDR_H) / ROW_H);
+  // ページ分割（A4横の実印刷領域に合わせて計算）
+  var rowsPerPage1 = Math.floor((PAGE_H_1 - HDR_H) / ROW_H);
+  var rowsPerPageN = Math.floor((PAGE_H_N - HDR_H) / ROW_H);
 
   // グループヘッダーが孤立（ページ末尾1行だけ）しないよう-1して余裕を持たせる
   rowsPerPage1 = Math.max(1, rowsPerPage1 - 1);
@@ -4000,7 +4005,7 @@ function printGantt(){
         var b=row.book, col=ganttColor(row.subject);
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
-        // 参考書名（行の上部に配置。BAR_Y_OFF=24なのでバーより上に配置）
+        // 参考書名（行の上部に配置。BAR_Y_OFF=20なのでバーより上に配置）
         var MAX_CHARS = 12;
         var nameLines;
         if(b.name.length <= MAX_CHARS){
@@ -4011,11 +4016,9 @@ function printGantt(){
           nameLines = [b.name.slice(0,MAX_CHARS), b.name.slice(MAX_CHARS, MAX_CHARS*2-1)+'…'];
         }
         if(nameLines.length === 1){
-          // 1行：バーより上の中央
           svg.appendChild(el('text',{x:LABEL_W-6,y:ry+BAR_Y_OFF/2+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
         } else {
-          // 2行：行の一番上から詰めて表示
-          var lineH2 = FS_LABEL + 1;
+          var lineH2 = FS_LABEL;
           nameLines.forEach(function(line, li){
             svg.appendChild(el('text',{x:LABEL_W-6,y:ry+FS_LABEL+li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
           });
@@ -4166,13 +4169,13 @@ function printGantt(){
     });
 
     var iframeHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
-      '@page{size:A4 landscape;margin:6mm 6mm 6mm 6mm;}' +
+      '@page{size:A4 landscape;margin:5mm 5mm 5mm 5mm;}' +
       '*{box-sizing:border-box;margin:0;padding:0;}' +
       'body{background:#fff;font-family:"Noto Sans JP",sans-serif;}' +
       '.pg-hd{display:flex;align-items:center;justify-content:space-between;' +
-        'padding-bottom:6px;border-bottom:2px solid #000;margin-bottom:8px;}' +
-      '.pg-hd-title{font-size:16pt;font-weight:900;color:#000;}' +
-      '.pg-hd-date{font-size:10pt;color:#555;}' +
+        'padding-bottom:4px;border-bottom:2px solid #000;margin-bottom:4px;}' +
+      '.pg-hd-title{font-size:14pt;font-weight:900;color:#000;}' +
+      '.pg-hd-date{font-size:9pt;color:#555;}' +
       '</style></head><body>' + bodyParts.join('') + '</body></html>';
 
     // 既存のiframeを削除
@@ -4182,7 +4185,7 @@ function printGantt(){
     // 非表示iframeを作成
     var iframe = document.createElement('iframe');
     iframe.id = '_gantt_print_iframe';
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1200px;height:800px;border:none;opacity:0;pointer-events:none;';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1300px;height:900px;border:none;opacity:0;pointer-events:none;';
     document.body.appendChild(iframe);
 
     // iframeにコンテンツ書き込み
