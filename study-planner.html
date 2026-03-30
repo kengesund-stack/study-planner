@@ -3830,34 +3830,37 @@ function printGantt(){
   var showPhase = (document.getElementById('gantt-phase')||{value:'1'}).value==='1';
 
   // ---- 印刷用レイアウト定数（A4横サイズ向け、読みやすいサイズ） ----
-  var LABEL_W  = 220;   // ラベル列幅
-  var ROW_H    = 52;    // 行の高さ（参考書名＋フェーズ日付ラベルが収まる余裕）
-  var BAR_H    = 16;    // バーの高さ
-  var BAR_Y_OFF= 30;    // バーのY offset（名前2行＋フェーズ日付ラベルの下に配置）
-  var HDR_MONTH_H = 28; // 月名行高さ
-  var HDR_TICK_H  = 20; // 目盛り行高さ
+  var LABEL_W  = 200;   // ラベル列幅
+  var ROW_H    = 42;    // 行の高さ（コンパクト化）
+  var BAR_H    = 14;    // バーの高さ
+  var BAR_Y_OFF= 24;    // バーのY offset
+  var HDR_MONTH_H = 26; // 月名行高さ
+  var HDR_TICK_H  = 18; // 目盛り行高さ
   var HDR_H    = HDR_MONTH_H + HDR_TICK_H;
   var PRINT_W  = 1020;
   var PAGE_H   = 700;
   var PG_HDR_H = 36;
 
   // フォントサイズ
-  var FS_MONTH = 16;
+  var FS_MONTH = 17;
   var FS_TICK  = 14;
-  var FS_LABEL = 14;
-  var FS_GROUP = 16;
-  var FS_BAR   = 13;
-  var FS_DAYS  = 12;
-  var FS_TODAY = 13;
-  var FS_PHASE_DATE = 10;
+  var FS_LABEL = 15;
+  var FS_GROUP = 17;
+  var FS_BAR   = 14;
+  var FS_DAYS  = 13;
+  var FS_TODAY = 14;
+  var FS_PHASE_DATE = 11;
 
-  // 日付範囲
+  // 日付範囲：3月1日〜翌2月末に固定
   var allDates=[];
   books.forEach(function(b){ allDates.push(new Date(b.startDate),new Date(b.endDate)); });
-  var minDate=new Date(Math.min.apply(null,allDates));
-  var maxDate=new Date(Math.max.apply(null,allDates));
-  minDate.setDate(minDate.getDate()-3);
-  maxDate.setDate(maxDate.getDate()+3);
+  var firstDate = new Date(Math.min.apply(null,allDates));
+  var startYear = firstDate.getMonth() >= 2 ? firstDate.getFullYear() : firstDate.getFullYear() - 1;
+  var minDate = new Date(startYear, 2, 1);   // 3月1日
+  var maxDate = new Date(startYear + 1, 1, 28); // 翌2月末（近似）
+  // 翌年2月の実際の末日を取得
+  var febEnd = new Date(startYear + 1, 2, 0);
+  maxDate = febEnd;
   var totalDays=Math.ceil((maxDate-minDate)/86400000);
 
   // 行リスト構築
@@ -3997,8 +4000,8 @@ function printGantt(){
         var b=row.book, col=ganttColor(row.subject);
         svg.appendChild(el('rect',{x:0,y:ry,width:SVG_W,height:ROW_H,fill:i%2===0?'#fff':'#fafafa'}));
         svg.appendChild(el('line',{x1:0,y1:ry+ROW_H,x2:SVG_W,y2:ry+ROW_H,stroke:'#e8e8e8','stroke-width':'1'}));
-        // 参考書名（行の上部に配置。BAR_Y_OFF=30なのでバーより上に十分スペースあり）
-        var MAX_CHARS = 13;
+        // 参考書名（行の上部に配置。BAR_Y_OFF=24なのでバーより上に配置）
+        var MAX_CHARS = 12;
         var nameLines;
         if(b.name.length <= MAX_CHARS){
           nameLines = [b.name];
@@ -4008,13 +4011,13 @@ function printGantt(){
           nameLines = [b.name.slice(0,MAX_CHARS), b.name.slice(MAX_CHARS, MAX_CHARS*2-1)+'…'];
         }
         if(nameLines.length === 1){
-          // 1行：フェーズ日付ラベル(10px)とバーの間の領域中央
-          svg.appendChild(el('text',{x:LABEL_W-8,y:ry+10+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
+          // 1行：バーより上の中央
+          svg.appendChild(el('text',{x:LABEL_W-6,y:ry+BAR_Y_OFF/2+1,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'middle','font-family':'Noto Sans JP,sans-serif'},nameLines[0]));
         } else {
           // 2行：行の一番上から詰めて表示
-          var lineH2 = FS_LABEL + 2;
+          var lineH2 = FS_LABEL + 1;
           nameLines.forEach(function(line, li){
-            svg.appendChild(el('text',{x:LABEL_W-8,y:ry+FS_LABEL+li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
+            svg.appendChild(el('text',{x:LABEL_W-6,y:ry+FS_LABEL+li*lineH2,fill:'#222','font-size':FS_LABEL,'text-anchor':'end','dominant-baseline':'auto','font-family':'Noto Sans JP,sans-serif'},line));
           });
         }
         // バー
