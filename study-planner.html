@@ -313,12 +313,59 @@ body.gantt-active #pane-gantt{width:100%;}
   /* hide EVERYTHING except the overlay */
   body > *:not(#print-overlay){ display:none!important; }
   #print-overlay{ display:block!important; position:static!important; }
-  html,body,#print-overlay{background:#fff!important;color:#000!important;}
-  /* スケジュール印刷: 全テキスト黒 */
-  #po-sched *{ color:#000!important; }
 
-  /* force ALL text black */
+  /* ============================================================
+     印刷時：CSS変数をすべて白ベースに強制上書き
+     （ダークテーマの --bg:#0d0d0d 等が印刷に漏れるのを防ぐ）
+     ============================================================ */
+  :root{
+    --bg:#ffffff!important;
+    --surface:#f5f5f5!important;
+    --surface2:#f0f0f0!important;
+    --border:#cccccc!important;
+    --border2:#dddddd!important;
+    --border-input:#aaaaaa!important;
+    --bg-input:#f8f8f8!important;
+    --bg-elevated:#eeeeee!important;
+    --text:#000000!important;
+    --text2:#333333!important;
+    --text3:#555555!important;
+    --text4:#777777!important;
+  }
+
+  html,body,#print-overlay{background:#fff!important;color:#000!important;}
+
+  /* 全テキスト黒・全背景白 */
   #print-overlay *{ color:#000!important; }
+  #print-overlay { background:#fff!important; }
+
+  /* 科目グループヘッダー行を薄いグレーに固定 */
+  .pa-group-hd td,
+  .pa-group-hd .pa-group-cell {
+    background:#e8e8e8!important;
+    color:#000!important;
+  }
+
+  /* インラインstyleで暗い背景が付いたtd/thも上書き */
+  #print-overlay td, #print-overlay th {
+    background-color: transparent;
+  }
+  .pa-group-hd td, .pa-group-hd th, .pa-group-hd .pa-group-cell {
+    background-color: #e8e8e8!important;
+  }
+  .pa-table th { background-color:#e0e0e0!important; }
+  .pa-table tr:nth-child(even) td { background-color:#f5f5f5!important; }
+  .pa-table tfoot td, .pa-total-row td { background-color:#ddd!important; }
+  .pa-group-subtotal td { background-color:#ebebeb!important; }
+  .ps-table th { background-color:#e0e0e0!important; }
+  .ps-table tr:nth-child(even) td { background-color:#f5f5f5!important; }
+  .ps-total-row td { background-color:#ddd!important; }
+  .po-book-badge, .po-hero, .po-sc, .po-phases, .po-tip {
+    background-color:#f0f0f0!important;
+  }
+  .po-ph-num { background-color:#ddd!important; }
+  .po-pb-wrap { background-color:#ccc!important; }
+  .po-pb-fill { background-color:#aaa!important; }
 
   @page{ size:A4;margin:20mm 12mm 15mm 12mm; }          /* 上20 右12 下15 左12 */
   @page landscape{ size:A4 landscape;margin:18mm 10mm 12mm 10mm; } /* 上18 右10 下12 左10 */
@@ -432,7 +479,7 @@ body.gantt-active #pane-gantt{width:100%;}
   .po-ph-period{font-size:9pt;color:#000;}
   .po-ph-desc{font-size:12pt;color:#000;font-weight:600;margin-bottom:4px;}
   .po-pb-wrap{background:#ccc;height:5px;border-radius:3px;overflow:hidden;}
-  .po-pb-fill{height:100%;background:#555;border-radius:3px;}
+  .po-pb-fill{height:100%;background:#aaa;border-radius:3px;}
   .po-ph-amt{font-family:'DM Mono',monospace;font-size:18pt;font-weight:700;
     color:#000;text-align:right;white-space:nowrap;}
   .po-ph-amt span{font-size:10pt;color:#000;display:block;text-align:right;}
@@ -471,7 +518,7 @@ body.gantt-active #pane-gantt{width:100%;}
   .pa-ph{font-size:8pt;color:#000;line-height:1.7;}
   .pa-ph b{color:#000;font-weight:700;}
   .pa-bar-w{background:#bbb;height:4px;border-radius:2px;margin-top:2px;overflow:hidden;}
-  .pa-bar{height:100%;background:#444;border-radius:2px;}
+  .pa-bar{height:100%;background:#999;border-radius:2px;}
   .pa-sum-lbl{font-size:9pt;color:#000;font-weight:700;}
 
   /* 科目グループヘッダー行 */
@@ -3309,11 +3356,11 @@ function printSchedule(){
             '①'+(bk.dailyMin/c2.p1).toFixed(1)+'分<br>②'+(bk.dailyMin/c2.p2).toFixed(1)+'分<br>③'+(bk.dailyMin/c2.perDay).toFixed(1)+'分':'—')+'</td>'+
           '<td style="font-size:8pt;">'+
             '<b>①'+c2.p1+'題</b>/日〜'+c2.p1End+'日目'+
-            '<div style="background:#ccc;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#444;height:100%;width:'+p1pct+'%"></div></div>'+
+            '<div style="background:#ddd;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#999;height:100%;width:'+p1pct+'%"></div></div>'+
             '<b>②'+c2.p2+'題</b>/日〜'+c2.p2End+'日目'+
-            '<div style="background:#ccc;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#444;height:100%;width:'+p2pct+'%"></div></div>'+
+            '<div style="background:#ddd;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#999;height:100%;width:'+p2pct+'%"></div></div>'+
             '<b>③'+c2.perDay+'題</b>/日〜'+bk.days+'日目'+
-            '<div style="background:#ccc;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#444;height:100%;width:100%"></div></div>'+
+            '<div style="background:#ddd;height:3px;border-radius:1px;margin:1px 0;overflow:hidden;"><div style="background:#999;height:100%;width:100%"></div></div>'+
           '</td>';
       }
     }
