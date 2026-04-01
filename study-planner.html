@@ -476,8 +476,8 @@ body.gantt-active #pane-gantt{width:100%;}
 
   /* 科目グループヘッダー行 */
   .pa-group-hd .pa-group-cell{
-    background:#555;color:#fff;font-size:10pt;font-weight:900;
-    padding:7px 8px;border:1.5px solid #888;letter-spacing:.05em;}
+    background:#e8e8e8;color:#000;font-size:10pt;font-weight:900;
+    padding:7px 8px;border:1.5px solid #999;letter-spacing:.05em;}
   /* グループ小計行 */
   .pa-group-subtotal td{
     background:#ebebeb;font-size:8pt;border-top:1.5px solid #888;border-bottom:1.5px solid #888;}
@@ -3273,13 +3273,13 @@ function printSchedule(){
       if(prevSubject===null){
         // 最初の勉強行 → 見出し行（改ページ付き）
         rows+='<tr style="break-before:page;page-break-before:always;">'+
-          '<td colspan="10" style="background:#333;color:#fff;font-size:9pt;font-weight:900;'+
-            'padding:6pt 9pt;border:1.5pt solid #555;letter-spacing:.04em;">📚 '+esc(curSubj)+'</td></tr>';
+          '<td colspan="10" style="background:#e8e8e8;color:#000;font-size:9pt;font-weight:900;'+
+            'padding:6pt 9pt;border:1.5pt solid #999;letter-spacing:.04em;">📚 '+esc(curSubj)+'</td></tr>';
       } else if(prevSubject!==curSubj){
         // 科目が変わった → 改ページして見出し
         rows+='<tr style="break-before:page;page-break-before:always;">'+
-          '<td colspan="10" style="background:#333;color:#fff;font-size:9pt;font-weight:900;'+
-            'padding:6pt 9pt;border:1.5pt solid #555;letter-spacing:.04em;">📚 '+esc(curSubj)+'</td></tr>';
+          '<td colspan="10" style="background:#e8e8e8;color:#000;font-size:9pt;font-weight:900;'+
+            'padding:6pt 9pt;border:1.5pt solid #999;letter-spacing:.04em;">📚 '+esc(curSubj)+'</td></tr>';
       }
       prevSubject=curSubj;
     } else {
